@@ -15,7 +15,7 @@
   --mark: #fff8c5;
   --quote: #59636e;
   --table-stripe: #f6f8fa;
-  --accent: #0969da;
+  --md-accent: #0969da;
   --note: #0969da;
   --tip: #1a7f37;
   --important: #8250df;
@@ -32,7 +32,8 @@
   --hl-add: #116329;
   --hl-del-bg: #ffebe9;
   --hl-del: #82071e;
-  --content-font: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans', Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji';
+  --content-font: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Noto Sans', Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji';
+  --content-line: 1.7;
   --mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
   --content-size: 16px;
   --content-width: 860px;
@@ -52,7 +53,7 @@
   --mark: rgba(187, 128, 9, 0.35);
   --quote: #9198a1;
   --table-stripe: #151b23;
-  --accent: #4493f8;
+  --md-accent: #4493f8;
   --note: #4493f8;
   --tip: #3fb950;
   --important: #ab7df8;
@@ -84,7 +85,7 @@
   --mark: #f5dd8c;
   --quote: #7a6a55;
   --table-stripe: #f2e9d7;
-  --accent: #9c4a12;
+  --md-accent: #9c4a12;
   --hl-keyword: #a3301f;
   --hl-string: #4d6a1e;
   --hl-title: #6b3fa0;
@@ -94,16 +95,19 @@
   --hl-built: #a05a00;
 }
 
-.present[data-theme='night'] { --bg: #111827; --fg: #f3f4f6; --link: #fbbf24; --accent: #fbbf24; --code-bg: #1f2937; --border-soft: #374151; }
+.present[data-theme='night'] { --bg: #111827; --fg: #f3f4f6; --link: #fbbf24; --md-accent: #fbbf24; --code-bg: #1f2937; --border-soft: #374151; }
 
-:root[data-font='serif'] { --content-font: 'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia, 'Noto Serif', serif; }
+:root[data-font='sans'] { --content-font: 'Helvetica Neue', Helvetica, Arial, 'PingFang SC', 'Microsoft YaHei', sans-serif; }
+:root[data-font='serif'] { --content-font: 'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia, 'Songti SC', 'Noto Serif CJK SC', 'Noto Serif', serif; }
+:root[data-font='humanist'] { --content-font: 'Avenir Next', Avenir, 'Segoe UI', Seravek, Ubuntu, 'PingFang SC', sans-serif; }
+:root[data-font='rounded'] { --content-font: ui-rounded, 'SF Pro Rounded', 'Hiragino Maru Gothic ProN', Quicksand, Nunito, 'PingFang SC', sans-serif; }
 :root[data-font='mono'] { --content-font: var(--mono); }
 
 .markdown-body {
   color: var(--fg);
   font-family: var(--content-font);
   font-size: var(--content-size);
-  line-height: 1.65;
+  line-height: var(--content-line);
   word-wrap: break-word;
   max-width: var(--content-width);
 }
@@ -159,7 +163,7 @@
 .markdown-body ul ul, .markdown-body ul ol, .markdown-body ol ol, .markdown-body ol ul { margin-top: 0.25em; margin-bottom: 0; }
 .markdown-body .contains-task-list { padding-left: 1.4em; }
 .markdown-body .task-list-item { list-style: none; }
-.markdown-body .task-list-item input[type='checkbox'] { margin: 0 0.45em 0.2em -1.4em; vertical-align: middle; cursor: pointer; accent-color: var(--accent); }
+.markdown-body .task-list-item input[type='checkbox'] { margin: 0 0.45em 0.2em -1.4em; vertical-align: middle; cursor: pointer; accent-color: var(--md-accent); }
 
 .markdown-body blockquote { margin-left: 0; margin-right: 0; padding: 0 1em; color: var(--quote); border-left: 0.25em solid var(--border); }
 
@@ -186,8 +190,25 @@
 
 .markdown-body details { border: 1px solid var(--border-soft); border-radius: 8px; padding: 0.5em 1em; }
 .markdown-body summary { cursor: pointer; font-weight: 600; }
-.markdown-body details.front-matter { font-size: 0.9em; color: var(--muted); }
-.markdown-body details.front-matter pre { margin: 0.5em 0 0; }
+.markdown-body .fm-card { border: 1px solid var(--border-soft); border-radius: 12px; padding: 12px 16px; margin-bottom: 1.6em; background: var(--code-bg); font-size: 0.88em; }
+.markdown-body .fm-card summary { font-size: 0.8em; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+.markdown-body .fm-card table { width: 100%; margin: 8px 0 0; border: 0; }
+.markdown-body .fm-card th, .markdown-body .fm-card td { border: 0; padding: 3px 10px 3px 0; vertical-align: top; text-align: left; background: none !important; }
+.markdown-body .fm-card th { color: var(--muted); font-weight: 500; width: 1%; white-space: nowrap; position: static; box-shadow: none; }
+.markdown-body .fm-card .fm-tag { display: inline-block; padding: 0 8px; margin: 0 4px 2px 0; border-radius: 10px; background: var(--inline-code-bg); font-size: 0.92em; }
+
+/* Plugin syntax */
+.markdown-body ins { text-decoration: underline; text-decoration-color: var(--tip); text-underline-offset: 3px; }
+.markdown-body abbr[title] { text-decoration: underline dotted; cursor: help; }
+.markdown-body dl { padding: 0; }
+.markdown-body dl dt { font-weight: 600; margin-top: 0.8em; }
+.markdown-body dl dd { margin: 0 0 0.5em 1.4em; }
+.markdown-body .container { padding: 0.8em 1.1em; border-radius: 10px; border: 1px solid var(--border-soft); border-left: 4px solid var(--c, var(--note)); background: color-mix(in srgb, var(--c, var(--note)) 7%, transparent); }
+.markdown-body .container > :last-child { margin-bottom: 0; }
+.markdown-body .container-title { font-weight: 700; margin-bottom: 0.4em; color: var(--c, var(--note)); }
+.markdown-body .container-tip { --c: var(--tip); } .markdown-body .container-warning { --c: var(--warning); } .markdown-body .container-danger, .markdown-body .container-caution { --c: var(--caution); }
+.markdown-body .container-info, .markdown-body .container-note { --c: var(--note); } .markdown-body .container-important { --c: var(--important); }
+.markdown-body details.container > summary { cursor: pointer; }
 
 /* GitHub alerts */
 .markdown-body .markdown-alert { padding: 0.5em 1em; border-left: 0.25em solid var(--alert, var(--note)); }

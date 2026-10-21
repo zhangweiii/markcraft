@@ -1,0 +1,28 @@
+@import './shared/ui.css';
+body { margin: 0; width: 360px; background: var(--ui-panel); color: var(--ui-fg); font: 13px/1.4 var(--ui-font); }
+header { display: flex; align-items: center; gap: 10px; padding: 14px 14px 10px; }
+.brand b { display: block; font-size: 14.5px; } .brand span { color: var(--ui-muted); font-size: 11.5px; }
+.spacer { flex: 1; }
+button.icon { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border: 0; border-radius: 8px; background: none; color: var(--ui-muted); cursor: pointer; }
+button.icon:hover { background: var(--ui-hover); color: var(--ui-fg); }
+.notice { margin: 0 14px 10px; padding: 10px 12px; border-radius: 12px; background: rgba(245, 165, 36, 0.1); border: 1px solid rgba(245, 165, 36, 0.3); display: flex; flex-direction: column; gap: 6px; font-size: 12px; }
+.notice .btn { align-self: flex-start; }
+.actions { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; padding: 0 14px 10px; }
+.actions button, .wide { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 12px 4px; border: 1px solid var(--ui-border); border-radius: 12px; background: var(--ui-raised); color: var(--ui-fg); cursor: pointer; font: 500 12px var(--ui-font); }
+.actions button .ic { color: var(--accent); }
+.actions button:hover, .wide:hover { background: var(--ui-hover); }
+.wide { flex-direction: row; justify-content: center; margin: 0 14px 10px; width: calc(100% - 28px); padding: 9px; }
+.recent-head { display: flex; align-items: center; padding: 8px 16px 6px; border-top: 1px solid var(--ui-border); }
+.recent-head b { font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--ui-faint); }
+.search { display: flex; align-items: center; gap: 6px; margin: 0 14px 6px; padding: 0 10px; height: 32px; border-radius: 9px; border: 1px solid var(--ui-border); background: var(--ui-raised); color: var(--ui-faint); }
+.search input { flex: 1; border: 0; outline: none; background: none; font: inherit; color: var(--ui-fg); }
+ul { list-style: none; margin: 0; padding: 0 8px 10px; max-height: 340px; overflow: auto; }
+.group { padding: 8px 8px 2px; font-size: 10.5px; font-weight: 650; text-transform: uppercase; letter-spacing: 0.06em; color: var(--ui-faint); }
+li a { display: flex; align-items: center; gap: 10px; padding: 7px 8px; border-radius: 9px; color: inherit; text-decoration: none; }
+li a:hover { background: var(--ui-hover); }
+li a .ic { color: var(--ui-faint); }
+li .txt { min-width: 0; flex: 1; } li b { display: block; font-weight: 550; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+li .txt span { display: block; color: var(--ui-muted); font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+li .rm { opacity: 0; border: 0; background: none; color: var(--ui-faint); cursor: pointer; font-size: 15px; }
+li a:hover .rm { opacity: 1; }
+.empty { color: var(--ui-muted); padding: 18px; text-align: center; }

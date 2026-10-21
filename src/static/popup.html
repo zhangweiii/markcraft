@@ -1,16 +1,18 @@
 <!doctype html>
 <html lang="en">
-<head><meta charset="utf-8"><title>MarkCraft</title><link rel="stylesheet" href="popup.css"><script type="module" src="popup.js"></script></head>
+<head><meta charset="utf-8"><title>MarkCraft</title><link rel="stylesheet" href="popup-style.css"><script type="module" src="popup.js"></script></head>
 <body>
-  <header><img src="icons/32.png" width="20" height="20" alt=""><b>MarkCraft</b><span class="spacer"></span><button id="settings" title="Settings">⚙</button></header>
-  <div id="file-warning" class="notice" hidden>Local <code>file://</code> Markdown needs <b>Allow access to file URLs</b>. <button class="link" id="enable">Enable…</button></div>
+  <header><img src="icons/48.png" width="28" height="28" alt=""><div class="brand"><b>MarkCraft</b><span>Modern Markdown Viewer</span></div><span class="spacer"></span>
+    <button class="icon" id="settings" title="Settings"><i data-icon="settings"></i></button></header>
+  <div id="file-warning" class="notice" hidden><b>File Access Required</b><span>To browse local markdown files, enable “Allow access to file URLs”.</span><button class="btn small" id="enable">Open Extension Settings</button></div>
   <div class="actions">
-    <button data-q="?welcome=1">Open file…</button>
-    <button data-q="?welcome=1&folder=1">Open folder…</button>
-    <button data-q="?new=1">New document</button>
+    <button data-q="?welcome=1"><i data-icon="file"></i><span>Open File</span></button>
+    <button data-q="?welcome=1&folder=1"><i data-icon="folder-open"></i><span>Open Folder</span></button>
+    <button data-q="?new=1"><i data-icon="new"></i><span>New Document</span></button>
   </div>
-  <div id="page-action" hidden><button id="render-page">Render this page as Markdown</button></div>
-  <h3>Recent</h3>
+  <button id="render-page" class="wide" hidden><i data-icon="eye"></i>Render this page as Markdown</button>
+  <div class="recent-head"><b>Recent Documents</b><span class="spacer"></span><button class="link" id="clear-recent">Clear All</button></div>
+  <div class="search"><i data-icon="search" data-size="14"></i><input id="q" type="search" placeholder="Search documents..."></div>
   <ul id="recent"></ul>
 </body>
 </html>

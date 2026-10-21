@@ -54,7 +54,11 @@ function build() {
   ui.addEventListener('click', (e) => {
     const b = e.target.closest('[data-p]');
     if (b && b.tagName === 'BUTTON') return act(b.dataset.p);
-    if (e.target.closest('.present-stage') && !e.target.closest('a, button, input, .diagram, img')) go(state.index + (e.clientX < innerWidth / 4 ? -1 : 1));
+    if (e.target.closest('.present-stage') && !e.target.closest('a, button, input, .diagram, img')) {
+      const x = e.clientX / innerWidth;
+      if (x > 0.3 && x < 0.7 && matchMedia('(pointer: coarse)').matches) return ui.classList.toggle('show-bar');
+      go(state.index + (x < 0.25 ? -1 : 1));
+    }
   });
   ui.querySelector('select').addEventListener('change', () => { if (state.timer) { stopPlay(); startPlay(); } });
   window.addEventListener('keydown', onKey, true);
@@ -75,9 +79,46 @@ function build() {
   });
 }
 
+const FONT_STACKS = {
+  sans: "'Helvetica Neue', Helvetica, Arial, 'PingFang SC', sans-serif",
+  serif: "'Iowan Old Style', Palatino, Georgia, 'Songti SC', serif",
+  humanist: "'Avenir Next', Avenir, 'Segoe UI', 'PingFang SC', sans-serif",
+  rounded: "ui-rounded, 'SF Pro Rounded', Nunito, 'PingFang SC', sans-serif",
+  mono: 'ui-monospace, Menlo, Consolas, monospace',
+  system: "-apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', sans-serif",
+};
+
+// Presentation settings → CSS variables (empty values fall back to the theme).
+function applyStyle(s) {
+  const st = ui.style;
+  const set = (k, v) => (v ? st.setProperty(k, v) : st.removeProperty(k));
+  set('--pres-accent', s.presAccent);
+  set('--pres-bg', s.presBackground);
+  set('--pres-heading', s.presHeading);
+  set('--pres-text', s.presText);
+  set('--pres-font', s.presFont !== 'default' ? FONT_STACKS[s.presFont] : '');
+  set('--pres-image', s.presImage ? `url("${s.presImage.replace(/"/g, '%22')}")` : '');
+  st.setProperty('--pres-image-opacity', (s.presImageOpacity ?? 30) / 100);
+}
+
+function toggleHelp() {
+  let help = ui.querySelector('.present-help');
+  if (help) return help.remove();
+  help = document.createElement('div');
+  help.className = 'present-help';
+  const rows = [['→ / Space / PageDown', 'Next slide'], ['← / PageUp', 'Previous slide'], ['Home / End', 'First slide / Last slide'], ['1–9', 'Go to slide 1-9'],
+    ['F', 'Toggle fullscreen'], ['N', 'Toggle speaker notes'], ['T', 'Theme'], ['A', 'Toggle auto-play'], ['?', 'Show/hide this help'], ['Esc', 'Exit presentation'],
+    ['Swipe', 'Next / previous slide'], ['Tap center', 'Toggle controls']];
+  help.innerHTML = `<div><h3 style="margin-top:0">Keyboard Shortcuts</h3><table>${rows.map(([k, d]) => `<tr><td><kbd>${k}</kbd></td><td>${d}</td></tr>`).join('')}</table></div>`;
+  help.addEventListener('click', () => help.remove());
+  ui.append(help);
+}
+
 function onKey(e) {
   if (!ui || ui.hidden) return;
   const k = e.key;
+  if (/^[1-9]$/.test(k) && !e.metaKey && !e.ctrlKey) { e.preventDefault(); e.stopPropagation(); return go(+k - 1); }
+  if (k === '?') { e.preventDefault(); e.stopPropagation(); return toggleHelp(); }
   const map = { ArrowRight: 'next', ArrowDown: 'next', PageDown: 'next', ' ': 'next', Enter: 'next', ArrowLeft: 'prev', ArrowUp: 'prev', PageUp: 'prev', Backspace: 'prev', Home: 'first', End: 'last', Escape: 'close', f: 'full', F: 'full', n: 'notes', N: 'notes', t: 'theme', T: 'theme', a: 'play', A: 'play' };
   if (!map[k] || e.metaKey || e.ctrlKey) return;
   e.preventDefault();
@@ -149,6 +190,7 @@ export function present(markdown, ctx, { startAt = 0, onClose } = {}) {
   if (!slides.length) return false;
   state = { slides, index: -1, ctx, onClose, theme: localStorage.getItem('mc-present-theme') || 'light' };
   ui.dataset.theme = state.theme;
+  applyStyle(ctx.settings);
   ui.hidden = false;
   go(startAt);
   ui.requestFullscreen?.().catch(() => {});

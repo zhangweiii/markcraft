@@ -59,12 +59,19 @@ const info = await page.evaluate(() => ({
   link: document.querySelector('#doc a[href*="other.md"]')?.href,
   graphviz: !!document.querySelector('#doc .graphviz-diagram svg'),
   wavedrom: !!document.querySelector('#doc .wavedrom-diagram svg'),
-  plantumlNotice: !!document.querySelector('#doc .plantuml-diagram .notice-msg'),
+  plantumlNotice: !document.querySelector('#doc .plantuml-diagram') && !!document.querySelector('#doc code.language-plantuml'),
   diagErr: [...document.querySelectorAll('.diagram-error-msg:not(.notice-msg)')].map((e) => e.textContent).join(';'),
   rtl: [...document.querySelectorAll('#doc p')].some((p) => p.dir === 'auto' && getComputedStyle(p).direction === 'rtl'),
   stats: document.querySelector('#stats')?.textContent,
   sticky: getComputedStyle(document.querySelector('#doc thead th')).position,
   extIcon: getComputedStyle(document.querySelector('#doc a[target=_blank]'), '::after').content !== 'none',
+  plugins: {
+    sub: document.querySelector('#doc sub')?.textContent, sup: document.querySelector('#doc sup:not(.footnote-ref)')?.textContent,
+    mark: document.querySelector('#doc mark')?.textContent, ins: document.querySelector('#doc ins')?.textContent,
+    emoji: document.querySelector('#doc')?.textContent.includes('🚀'), abbr: document.querySelector('#doc abbr')?.title,
+    dl: !!document.querySelector('#doc dl dt'), container: document.querySelector('#doc .container-tip .container-title')?.textContent,
+    fm: !!document.querySelector('#doc .fm-card table'),
+  },
   files: [...document.querySelectorAll('#explorer .fx-row')].map((e) => e.textContent),
   title: document.title,
 }));
@@ -77,12 +84,13 @@ check('GitHub alert', info.alert);
 check('footnotes', info.footnote);
 check('task list checkboxes', info.tasks === 2);
 check('table', info.table);
-check('front matter', info.frontMatter);
 check('local image loads', info.img === 'blob:' && info.imgLoaded > 0, `${info.img} ${info.imgLoaded}`);
 check('relative .md link → viewer', info.link?.includes('viewer.html?file='), info.link);
+check('plugins: sub/sup/mark/ins/emoji/abbr/deflist/container', info.plugins.sub === '2' && info.plugins.mark === 'marked' && info.plugins.ins === 'inserted' && info.plugins.emoji && info.plugins.abbr === 'Hyper Text Markup Language' && info.plugins.dl && info.plugins.container === 'Pro tip', JSON.stringify(info.plugins));
+check('front matter metadata card', info.plugins.fm);
 check('Graphviz diagram', info.graphviz, info.diagErr);
 check('WaveDrom diagram', info.wavedrom, info.diagErr);
-check('PlantUML is opt-in (notice shown)', info.plantumlNotice);
+check('PlantUML is opt-in (off by default)', info.plantumlNotice);
 check('RTL paragraph auto-direction', info.rtl);
 check('word count & reading time', /words · .* min read/.test(info.stats || ''), info.stats);
 check('sticky table header', info.sticky === 'sticky');
@@ -91,19 +99,22 @@ check('file explorer lists .txt', info.files.includes('llms.txt'));
 check('file explorer lists folder', info.files.includes('sample.md') && info.files.includes('sub'), info.files.join(','));
 
 // Search in folder + bookmarks
-await page.click('[data-side="files"]');
+await page.click('#dock [data-act="toggle-sidebar"]');
+await page.click('[data-act="actions"]');
+await page.click('#actions-menu [data-act="search-folder"]');
 await page.fill('#fx-search', 'Back to');
 await page.waitForSelector('#fx-results .sr-line', { timeout: 5000 }).catch(() => {});
 check('search in folder finds other.md', (await page.textContent('#fx-results').catch(() => '')).includes('sub/other.md'));
 await page.fill('#fx-search', '');
 await page.dispatchEvent('#fx-search', 'input');
-await page.click('#fx-star');
+await page.click('[data-act="fx-more"]');
+await page.click('#fx-more-menu [data-act="bookmark-folder"]');
 await page.waitForTimeout(300);
 check('folder bookmark added', (await page.textContent('#fx-star')) === '★');
 await page.click('[data-act="bookmarks"]');
 check('bookmark list shows folder', (await page.locator('#bookmarks .bm-row').count()) === 1);
 await page.click('[data-act="bookmarks"]');
-await page.click('[data-side="outline"]');
+await page.click('#dock [data-act="toggle-sidebar"]');
 
 // Lightbox
 await page.click('#doc img.zoomable');
@@ -117,7 +128,7 @@ await page.keyboard.press('Escape');
 
 // Word export
 const dl = page.waitForEvent('download', { timeout: 20000 }).catch(() => null);
-await page.evaluate(() => document.querySelector('[data-act="export-docx"]').click());
+await page.evaluate(() => document.querySelector('#actions-menu [data-act="export-docx"]').click());
 const download = await dl;
 if (download) {
   const file = path.join(work, 'out.docx');
@@ -131,7 +142,7 @@ if (download) {
 } else check('Word export produces .docx', false, 'no download');
 
 // Mind map
-await page.click('[data-act="mindmap"]');
+await page.evaluate(() => document.querySelector('#actions-menu [data-act="mindmap"]').click());
 await page.waitForSelector('.mindmap-view svg g circle', { timeout: 10000 }).catch(() => {});
 check('mind map renders', (await page.locator('.mindmap-view svg g circle').count()) > 3);
 await page.waitForTimeout(1200);
@@ -139,7 +150,7 @@ if (process.env.SHOTS) await page.screenshot({ path: path.join(process.env.SHOTS
 await page.keyboard.press('Escape');
 
 // Presentation
-await page.click('[data-act="present"]');
+await page.evaluate(() => document.querySelector('#actions-menu [data-act="present"]').click());
 await page.waitForSelector('.present .slide h1, .present .slide h2', { timeout: 5000 }).catch(() => {});
 const count1 = await page.textContent('.present-count');
 await page.keyboard.press('ArrowRight');
@@ -178,13 +189,14 @@ const st = await page.evaluate(() => window.__markcraft.S.text.includes('- [x] U
 check('task toggle edits source', st);
 
 // Source mode
-await page.click('[data-mode="source"]');
+await page.evaluate(() => window.__markcraft.setMode('source'));
 check('source mode shows markdown', (await page.inputValue('#source')).includes('# MarkCraft Sample'));
 
 // Edit (WYSIWYG) mode
 check('no errors in read mode', errors.length === 0, errors.slice(0, 5).join(' || '));
 const readErrors = errors.length;
-await page.click('[data-mode="edit"]');
+await page.evaluate(() => window.__markcraft.setMode('read'));
+await page.click('#dock [data-act="toggle-edit"]');
 await page.waitForSelector('#editor .ProseMirror', { timeout: 15000 }).catch(() => {});
 const editorOk = await page.evaluate(() => !!document.querySelector('#editor .ProseMirror h1'));
 check('WYSIWYG editor loads', editorOk);
@@ -203,7 +215,7 @@ if (editorOk) {
 }
 
 // Review comment
-await page.click('[data-mode="read"]');
+await page.evaluate(() => window.__markcraft.setMode('read'));
 await page.waitForTimeout(500);
 await page.evaluate(() => {
   const p = [...document.querySelectorAll('#doc p')].find((x) => x.textContent.includes('Final paragraph'));
@@ -263,6 +275,23 @@ await p2.waitForSelector('#doc h1', { timeout: 8000 }).catch(() => {});
 check('.txt rendered as Markdown', (await p2.textContent('#doc h1').catch(() => '')) === 'llms.txt');
 await p2.close();
 
+// Settings modal: toggle a plugin and a layout option
+await page.keyboard.press('Meta+,');
+await page.waitForSelector('#settings-modal[open] .st-tabs', { timeout: 3000 }).catch(() => {});
+check('quick settings opens (⌘,)', await page.isVisible('#settings-modal .st-tabs'));
+await page.click('.st-tabs [data-tab="plugins"]');
+await page.click('.st-body input[data-plugin="emoji"]', { force: true });
+await page.waitForTimeout(300);
+const emojiOff = await page.evaluate(() => window.__markcraft.S.settings.plugins.emoji === false);
+check('plugin toggle saves', emojiOff);
+await page.click('.st-body input[data-plugin="emoji"]', { force: true });
+await page.click('.st-tabs [data-tab="appearance"]');
+await page.click('.st-body .segment[data-key="layout"] [data-v="full"]');
+await page.waitForTimeout(300);
+check('layout setting applies', await page.evaluate(() => document.body.classList.contains('layout-full')));
+await page.click('.st-body .segment[data-key="layout"] [data-v="centered"]');
+await page.click('.st-close');
+
 // Chinese UI
 const p3 = await ctx.newPage();
 await p3.goto('file://' + sample);
@@ -270,7 +299,7 @@ await p3.waitForSelector('#doc h1', { timeout: 8000 });
 await p3.evaluate(() => chrome.storage.sync.get('settings').then(({ settings }) => chrome.storage.sync.set({ settings: { ...settings, language: 'zh-CN' } })));
 await p3.reload();
 await p3.waitForSelector('#doc h1', { timeout: 8000 });
-const zh = await p3.evaluate(() => ({ read: document.querySelector('#mode-switch [data-mode="read"]').textContent, outline: document.querySelector('[data-side="outline"]').textContent, h1: document.querySelector('#doc h1').textContent }));
+const zh = await p3.evaluate(() => ({ read: document.querySelector('#mode-switch [data-mode="read"]').textContent, outline: document.querySelector('.pane-title').textContent, h1: document.querySelector('#doc h1').textContent }));
 check('Chinese UI (content untouched)', zh.read === '阅读' && zh.outline === '大纲' && zh.h1 === 'MarkCraft Sample', JSON.stringify(zh));
 if (process.env.SHOTS) await p3.screenshot({ path: path.join(process.env.SHOTS, 'zh.png') });
 await p3.close();

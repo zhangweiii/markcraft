@@ -10,6 +10,7 @@ import katex from 'katex';
 import DOMPurify from 'dompurify';
 import { DIAGRAM_LANGS, renderDiagrams } from './diagrams.js';
 import { t } from '../shared/i18n.js';
+import { pluginExtensions, extractAbbreviations, applyAbbreviations, parseFrontMatter } from './plugins.js';
 
 export const FRONT_MATTER = /^---\r?\n([\s\S]*?)\r?\n(?:---|\.\.\.)\r?\n?/;
 const TASK_ITEM = /^(\s*(?:>\s*)*(?:[-*+]|\d+[.)])\s+)\[([ xX])\]/;
@@ -56,7 +57,8 @@ const mathExtensions = [
 ];
 
 function createMarked(settings) {
-  const marked = new Marked(
+  const p = settings.plugins;
+  const exts = [
     markedHighlight({
       emptyLangClass: 'hljs',
       langPrefix: 'hljs language-',
@@ -68,12 +70,23 @@ function createMarked(settings) {
       },
     }),
     gfmHeadingId(),
-    markedFootnote(),
-    markedAlert(),
-  );
-  marked.setOptions({ gfm: true, breaks: false });
-  if (settings.math) marked.use({ extensions: mathExtensions });
+  ];
+  if (p.footnote) exts.push(markedFootnote());
+  if (p.alerts) exts.push(markedAlert());
+  const marked = new Marked(...exts);
+  marked.setOptions({ gfm: true, breaks: settings.lineBreaks === 'github' });
+  if (p.katex) marked.use({ extensions: mathExtensions });
+  for (const use of pluginExtensions(p)) marked.use(use);
+  // Without the task-list plugin, render "[ ]" items as plain text.
+  if (!p.taskLists) marked.use({ renderer: { checkbox: () => '' }, walkTokens: (tok) => { if (tok.type === 'list_item' && tok.task) { tok.task = false; tok.text = (tok.checked ? '[x] ' : '[ ] ') + tok.text; } } });
   return marked;
+}
+
+function frontMatterCard(src) {
+  const rows = parseFrontMatter(src);
+  if (!rows.length) return `<details class="fm-card" open><summary>${t('Document Metadata')}</summary><pre>${escapeHtml(src)}</pre></details>`;
+  const cell = (r) => (r.list.length ? r.list.map((v) => `<span class="fm-tag">${escapeHtml(v)}</span>`).join('') : escapeHtml(r.value));
+  return `<details class="fm-card" open><summary>${t('Document Metadata')}</summary><table>${rows.map((r) => `<tr><th>${escapeHtml(r.key)}</th><td>${cell(r)}</td></tr>`).join('')}</table></details>`;
 }
 
 // Relative image URLs would resolve against the extension origin and 404 before
@@ -89,22 +102,25 @@ DOMPurify.addHook('afterSanitizeAttributes', (node) => {
 
 let cached;
 export function renderMarkdown(text, settings) {
-  const key = `${settings.math}`;
+  const key = JSON.stringify([settings.plugins, settings.lineBreaks]);
   if (!cached || cached.key !== key) cached = { key, marked: createMarked(settings) };
 
   let frontMatter = null;
   const fm = FRONT_MATTER.exec(text);
-  if (fm) {
+  if (fm && settings.plugins.frontMatter) {
     frontMatter = fm[1];
     text = text.slice(fm[0].length);
   }
+  let abbr = {};
+  if (settings.plugins.abbreviation) ({ text, defs: abbr } = extractAbbreviations(text));
   const raw = cached.marked.parse(text);
   let html = DOMPurify.sanitize(raw, {
     ADD_TAGS: ['semantics', 'annotation'],
-    ADD_ATTR: ['target', 'checked', 'align', 'encoding'],
+    ADD_ATTR: ['target', 'checked', 'align', 'encoding', 'rowspan', 'colspan'],
     ALLOW_DATA_ATTR: true,
   });
-  if (frontMatter) html = `<details class="front-matter"><summary>${t('Front matter')}</summary><pre>${escapeHtml(frontMatter)}</pre></details>` + html;
+  if (frontMatter && settings.frontMatterCard) html = frontMatterCard(frontMatter) + html;
+  if (Object.keys(abbr).length) html = `<template data-abbr="${escapeHtml(JSON.stringify(abbr))}"></template>` + html;
   return html;
 }
 
@@ -142,12 +158,25 @@ const COPY_ICON = '<svg viewBox="0 0 16 16" width="14" height="14"><path fill="c
  * Enhance freshly rendered HTML inside `root`.
  * ctx: { settings, dark, resolveAsset(href) -> Promise<string|null>, resolveLink(href) -> string|null, onTaskToggle(index, checked) }
  */
+const ALERT_TITLES = { Note: 'Note', Tip: 'Tip', Important: 'Important', Warning: 'Warning', Caution: 'Caution' };
+
 export async function enhance(root, ctx) {
+  const abbrTpl = root.querySelector('template[data-abbr]');
+  if (abbrTpl) {
+    applyAbbreviations(root, JSON.parse(abbrTpl.dataset.abbr));
+    abbrTpl.remove();
+  }
+  if (ctx.settings.localizeAlerts) {
+    for (const title of root.querySelectorAll('.markdown-alert-title')) {
+      const node = [...title.childNodes].find((n) => n.nodeType === Node.TEXT_NODE && ALERT_TITLES[n.data.trim()]);
+      if (node) node.data = node.data.replace(node.data.trim(), t(node.data.trim()));
+    }
+  }
   // Code blocks: language label, copy button, optional line numbers.
   for (const code of root.querySelectorAll('pre > code')) {
     const pre = code.parentElement;
     const lang = [...code.classList].find((c) => c.startsWith('language-'))?.slice(9) || '';
-    if (lang === 'math' && ctx.settings.math) {
+    if (lang === 'math' && ctx.settings.plugins.katex) {
       const div = document.createElement('div');
       div.className = 'math-block';
       div.innerHTML = renderKatex(code.textContent, true);
@@ -155,7 +184,7 @@ export async function enhance(root, ctx) {
       continue;
     }
     const kind = DIAGRAM_LANGS[lang.toLowerCase()];
-    if (kind && (kind !== 'mermaid' || ctx.settings.mermaid)) {
+    if (kind && ctx.settings.plugins[kind]) {
       pre.classList.add('diagram-pending');
       pre.dataset.kind = kind;
       pre.dataset.source = code.textContent;

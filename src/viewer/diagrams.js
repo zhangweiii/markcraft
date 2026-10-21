@@ -65,9 +65,11 @@ async function plantumlEncode(text) {
 }
 
 async function plantuml(source, dark, settings) {
-  if (!settings.plantumlServer) {
-    const err = new Error('PlantUML needs a rendering server. Turn it on in Settings → Rendering (sends the diagram source to that server).');
+  if (!settings.plantumlConsent) {
+    const host = (() => { try { return new URL(settings.plantumlServer).host; } catch { return settings.plantumlServer; } })();
+    const err = new Error(`Rendering this diagram requires sending its source code to a third-party server (${host}).`);
     err.notice = true;
+    err.consent = true;
     throw err;
   }
   const url = `${settings.plantumlServer.replace(/\/$/, '')}/${dark ? 'dsvg' : 'svg'}/${await plantumlEncode(source)}`;
@@ -99,7 +101,7 @@ export async function renderDiagrams(root, { dark, settings }) {
       fig.innerHTML = svg.replace(/<script[\s\S]*?<\/script>/gi, '').replace(/\son\w+="[^"]*"/gi, '');
     } catch (e) {
       fig.classList.add('diagram-error');
-      fig.innerHTML = `<div class="diagram-error-msg${e.notice ? ' notice-msg' : ''}">${escapeHtml(kind)}: ${escapeHtml(String(e.message || e).split('\n')[0])}</div><pre>${escapeHtml(source)}</pre>`;
+      fig.innerHTML = `<div class="diagram-error-msg${e.notice ? ' notice-msg' : ''}">${escapeHtml(kind)}: ${escapeHtml(String(e.message || e).split('\n')[0])}${e.consent ? ' <button class="btn small" data-act="plantuml-consent">Enable rendering</button>' : ''}</div><pre>${escapeHtml(source)}</pre>`;
     }
     pre.replaceWith(fig);
   }

@@ -30,11 +30,10 @@ export function setupFolderTools({ explorer, openAt, toast, showFiles }) {
 
   async function refreshStar() {
     const key = rootKey(explorer.root);
-    star.hidden = !key;
     const marked = (await getBookmarks()).some((b) => b.key === key);
     star.textContent = marked ? '★' : '☆';
-    star.title = marked ? 'Remove folder bookmark' : 'Bookmark this folder';
-    star.classList.toggle('on', marked);
+    star.dataset.on = marked ? '1' : '';
+    document.getElementById('fx-star-label').textContent = t(marked ? 'Remove Bookmark' : 'Add Bookmark');
   }
 
   // Keep the star and search in sync with the explorer root.
@@ -42,7 +41,7 @@ export function setupFolderTools({ explorer, openAt, toast, showFiles }) {
   explorer.setRoot = async (...args) => {
     const r = await setRoot(...args);
     refreshStar();
-    input.hidden = !explorer.root;
+    if (!explorer.root) $('#fx-search-box').hidden = true;
     if (input.value) runSearch();
     return r;
   };
@@ -97,7 +96,7 @@ export function setupFolderTools({ explorer, openAt, toast, showFiles }) {
   async function runSearch() {
     controller?.abort();
     const q = input.value.trim();
-    if (q.length < 2 || !explorer.root) {
+    if (q.length < 3 || !explorer.root) {
       results.hidden = true;
       $('#explorer').hidden = false;
       return;
@@ -108,20 +107,26 @@ export function setupFolderTools({ explorer, openAt, toast, showFiles }) {
     $('#explorer').hidden = true;
     results.innerHTML = '<div class="fx-searching">Searching…</div>';
     let hits = 0;
-    const mark = (line, at) => {
+    const mark = (line, at, len) => {
       const start = Math.max(0, at - 30);
-      return escapeHtml((start ? '…' : '') + line.slice(start, at)) + '<mark>' + escapeHtml(line.slice(at, at + q.length)) + '</mark>' + escapeHtml(line.slice(at + q.length, at + q.length + 60));
+      return escapeHtml((start ? '…' : '') + line.slice(start, at)) + '<mark>' + escapeHtml(line.slice(at, at + len)) + '</mark>' + escapeHtml(line.slice(at + len, at + len + 60));
     };
-    const scanned = await explorer.search(q, (file, matches, count) => {
+    let scanned;
+    try {
+      scanned = await explorer.search(q, (file, matches, count) => {
       if (signal.aborted) return;
       if (!hits) results.innerHTML = '';
       hits++;
       const div = document.createElement('div');
       div.className = 'sr-file';
       div.innerHTML = `<a class="sr-name" href="${file.href}" title="${escapeHtml(file.path)}">${escapeHtml(file.path)}<span class="sr-count">${count || ''}</span></a>` +
-        matches.map((m) => `<a class="sr-line" href="${file.href}"><span class="ln">${m.line}</span>${mark(m.text, m.at)}</a>`).join('');
+        matches.map((m) => `<a class="sr-line" href="${file.href}"><span class="ln">${m.line}</span>${mark(m.text, m.at, m.len)}</a>`).join('');
       results.append(div);
     }, signal);
+    } catch (e) {
+      results.innerHTML = `<div class="empty-hint">${escapeHtml(e.message)}</div>`;
+      return;
+    }
     if (signal.aborted) return;
     if (!hits) results.innerHTML = `<div class="empty-hint">${t('No matches in {n} files', { n: scanned })}</div>`;
     else results.insertAdjacentHTML('afterbegin', `<div class="fx-searching">${t('{n} files · {m} searched', { n: hits, m: scanned })}</div>`);
@@ -132,7 +137,7 @@ export function setupFolderTools({ explorer, openAt, toast, showFiles }) {
     timer = setTimeout(runSearch, 300);
   });
   input.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') { input.value = ''; runSearch(); }
+    if (e.key === 'Escape') { input.value = ''; $('#fx-search-box').hidden = true; runSearch(); }
   });
   results.addEventListener('click', (e) => {
     const a = e.target.closest('a');

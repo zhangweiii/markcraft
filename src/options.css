@@ -1,0 +1,3 @@
+@import './shared/ui.css';
+html, body { height: 100%; margin: 0; background: var(--ui-panel); }
+#settings-root { height: 100%; max-width: 1180px; margin: 0 auto; border-left: 1px solid var(--ui-border); border-right: 1px solid var(--ui-border); }

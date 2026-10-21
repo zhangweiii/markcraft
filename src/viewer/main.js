@@ -1,4 +1,6 @@
-import { getSettings, setSettings, getLayout, saveLayout, onSettingsChanged } from '../shared/settings.js';
+import { getSettings, setSettings, getLayout, saveLayout, onSettingsChanged, SHORTCUTS } from '../shared/settings.js';
+import { icon, hydrateIcons } from '../shared/icons.js';
+import { mountSettings, comboFromEvent, comboLabel } from '../shared/settings-ui.js';
 import { addRecent, getRecent, storeHandle, db } from '../shared/db.js';
 import { renderMarkdown, enhance, taskPositions, escapeHtml } from './render.js';
 import { Outline } from './toc.js';
@@ -75,22 +77,37 @@ function applyTheme() {
   const t = S.settings.theme;
   const dark = t === 'dark' || (t === 'auto' && matchMedia('(prefers-color-scheme: dark)').matches);
   document.documentElement.dataset.theme = t === 'sepia' ? 'sepia' : dark ? 'dark' : 'light';
+  const st = S.settings;
   const r = document.documentElement.style;
-  r.setProperty('--content-size', S.settings.fontSize + 'px');
-  r.setProperty('--content-width', S.settings.contentWidth + 'px');
-  document.documentElement.dataset.font = S.settings.fontFamily;
-  $('#theme-select').value = t;
+  r.setProperty('--content-size', st.fontSize + 'px');
+  r.setProperty('--content-width', st.contentWidth + 'px');
+  r.setProperty('--content-line', st.lineHeight);
+  document.documentElement.dataset.font = st.fontFamily;
+  const b = document.body.classList;
+  b.toggle('layout-full', st.layout === 'full');
+  b.toggle('wrap-names', st.wrapLongNames);
+  b.toggle('code-wrap', st.codeWrap === 'wrap');
+  b.toggle('no-link-icons', !st.linkIndicators);
+  b.toggle('no-sticky', !st.stickyHeaders);
+  // Syntax theme: our adaptive token colors, or a highlight.js stylesheet.
+  const link = $('#hljs-theme');
+  b.toggle('hljs-themed', st.syntaxTheme !== 'auto');
+  if (st.syntaxTheme === 'auto') link.disabled = true;
+  else { link.href = `hljs/${st.syntaxTheme}.min.css`; link.disabled = false; }
+  const themeIcon = { auto: 'sun-moon', light: 'sun', dark: 'moon', sepia: 'read' }[t];
+  $('[data-act="toggle-theme"]').innerHTML = icon(themeIcon);
+  $('[data-act="toggle-layout"]').innerHTML = icon(st.layout === 'full' ? 'wide' : 'centered');
 }
 const isDark = () => document.documentElement.dataset.theme === 'dark';
 
 function updateTitle() {
   const src = S.source;
   $('#doc-name').textContent = src ? src.name : 'MarkCraft';
-  // LRM marks keep the leading "/" in place under the rtl (ellipsis-at-start) styling.
-  $('#doc-path').textContent = src && src.path !== src.name ? `\u200e${src.path}\u200e` : '';
-  $('#doc-path').title = src?.path || '';
+  $('#doc-name').title = src?.path || '';
   $('#dirty-dot').hidden = !S.dirty;
-  $('#save-btn').classList.toggle('attention', S.dirty);
+  document.body.classList.toggle('dirty', S.dirty);
+  // The floating edit bar appears while editing or when there is something to save.
+  $('#editbar').hidden = !src || (S.mode === 'read' && !S.dirty);
   document.title = (S.dirty ? '• ' : '') + (src ? src.name : 'MarkCraft');
 }
 
@@ -148,9 +165,8 @@ function fitTables(root) {
 function updateStats() {
   const bar = $('#statusbar');
   bar.hidden = !S.settings.showStats || !S.source;
-  $('#progress').hidden = bar.hidden || S.mode === 'source';
-  if (bar.hidden) return;
-  $('#stats').textContent = formatStats(textStats(S.text.replace(/```[\s\S]*?```/g, ' ').replace(/[#>*_`~|\[\]()-]/g, ' ')));
+  $('#progress').hidden = !S.settings.readingProgress || !S.source || S.mode === 'source';
+  if (!bar.hidden) $('#stats').textContent = formatStats(textStats(S.text.replace(/```[\s\S]*?```/g, ' ').replace(/[#>*_`~|\[\]()-]/g, ' ')));
   updateProgress();
 }
 
@@ -159,7 +175,13 @@ function updateProgress() {
   const max = sc.scrollHeight - sc.clientHeight;
   const pct = max <= 0 ? 100 : Math.round((sc.scrollTop / max) * 100);
   $('#progress > div').style.width = pct + '%';
-  $('#progress-pct').textContent = S.mode === 'source' ? '' : pct + '%';
+  const nearEnd = max > 0 && max - sc.scrollTop < 120;
+  $('#statusbar').classList.toggle('away', S.settings.statsAutoHide && nearEnd);
+  $('#scroll-top').hidden = sc.scrollTop < 600 || S.mode === 'source';
+  if (nearEnd && max > 400 && S.settings.celebration && S.mode === 'read' && !S.celebrated) {
+    S.celebrated = true;
+    import('./confetti.js').then((m) => m.confetti());
+  }
 }
 
 function afterContentChange() {
@@ -209,6 +231,7 @@ async function setMode(mode, { force = false } = {}) {
   S.mode = mode;
   $$('#mode-switch button').forEach((b) => b.classList.toggle('active', b.dataset.mode === mode));
   document.body.dataset.mode = mode;
+  updateTitle();
   els.doc.hidden = mode !== 'read';
   els.editor.hidden = mode !== 'edit';
   els.source.hidden = mode !== 'source';
@@ -311,6 +334,7 @@ async function loadSource(src, { push = true, replace = false, initialText = nul
   S.diskText = src.kind === 'new' ? '' : text;
   S.external = null;
   S.imageHintShown = false;
+  S.celebrated = false;
   hideBanner();
   markDirty();
   document.body.classList.remove('loading', 'welcome');
@@ -408,22 +432,23 @@ async function showWelcomeScreen(error) {
   const fileAccess = await chrome.extension.isAllowedFileSchemeAccess();
   showWelcome(`
     <div class="welcome-card">
-      <img src="icons/128.png" alt="" width="72" height="72">
+      <img class="logo" src="icons/128.png" alt="">
       <h1>MarkCraft</h1>
-      <p class="tagline">Read, edit and review Markdown — right in Chrome.</p>
+      <p class="tagline">${t('Read, edit and review Markdown — right in Chrome.')}</p>
       ${error ? `<p class="error-text">${escapeHtml(error)}</p>` : ''}
       <div class="welcome-actions">
-        <button class="btn primary" data-act="open">Open file…</button>
-        <button class="btn" data-act="open-folder">Open folder…</button>
-        <button class="btn" data-act="new">New document</button>
+        <button data-act="open">${icon('file')}${t('Open file…')}</button>
+        <button data-act="open-folder">${icon('folder-open')}${t('Open folder…')}</button>
+        <button data-act="new">${icon('new')}${t('New document')}</button>
       </div>
-      <p class="hint">or drop a .md file or folder anywhere on this page · ${isMac ? '⌘' : 'Ctrl+'}O to open</p>
-      ${fileAccess ? '' : `<div class="notice">To open <code>file://</code> Markdown links directly, enable <b>Allow access to file URLs</b>. <button class="link-btn" id="ext-settings">Open settings</button></div>`}
-      ${recent.length ? `<h3>Recent</h3><ul class="recent">${recent.slice(0, 12).map((r) => `<li><a href="${VIEWER}${r.query}" data-internal="1"><b>${escapeHtml(r.name)}</b><span>${escapeHtml(r.path)}</span></a></li>`).join('')}</ul>` : ''}
+      <p class="hint">${t('or drop a .md file or folder anywhere on this page')} · <kbd>${isMac ? '⌘' : 'Ctrl+'}O</kbd></p>
+      ${fileAccess ? '' : `<div class="notice">${t('To open file:// Markdown links directly, enable “Allow access to file URLs”.')} <button class="link" id="ext-settings">${t('Open settings')}</button></div>`}
+      ${recent.length ? `<h3>${t('Recent')}</h3><ul class="recent">${recent.slice(0, 10).map((r) => `<li><a href="${VIEWER}${r.query}" data-internal="1">${icon(r.kind === 'url' && !r.path.startsWith('/') ? 'globe' : 'file', 18)}<span class="r-text"><b>${escapeHtml(r.name)}</b><span>${escapeHtml(r.path)}</span></span></a></li>`).join('')}</ul>` : ''}
     </div>`);
   $('#ext-settings')?.addEventListener('click', () => chrome.tabs.create({ url: `chrome://extensions/?id=${chrome.runtime.id}` }));
   outline.build();
   if (!explorer.root) explorer.setRoot(null);
+  $('#editbar').hidden = true;
 }
 
 // ---------- explorer ----------
@@ -466,13 +491,12 @@ async function useFolder(dir) {
       await loadSource(src, { initialText: S.text, keepMode: true });
       S.diskText = await src.read().catch(() => S.diskText);
       markDirty();
-      showSide('files');
+      setSidebar(true);
       return;
     }
   }
   explorerRootKey = id;
   await explorer.setRoot({ type: 'handle', handle: dir, id }, S.source?.key);
-  showSide('files');
   setSidebar(true);
   if (!S.source || S.source.kind === 'new') {
     for (const name of ['README.md', 'readme.md', 'index.md']) {
@@ -532,7 +556,7 @@ let watchTimer = null;
 let watchBusy = false;
 function startWatch() {
   stopWatch();
-  if (!S.source || S.source.kind === 'new') return;
+  if (!S.source || S.source.kind === 'new' || !S.settings.autoRefresh) return;
   const interval = S.source.pollInterval || S.settings.pollInterval;
   watchTimer = setInterval(checkDisk, interval);
 }
@@ -794,16 +818,10 @@ function setSidebar(open) {
   saveLayout({ sidebarOpen: open });
 }
 
-function showSide(tab) {
-  S.layout.sidebarTab = tab;
-  $$('[data-side]').forEach((b) => b.classList.toggle('active', b.dataset.side === tab));
-  $$('[data-pane]').forEach((p) => (p.hidden = p.dataset.pane !== tab));
-  saveLayout({ sidebarTab: tab });
-}
-
 function setPanel(open, tab) {
   S.layout.panelOpen = open;
   $('#panel').hidden = !open;
+  document.body.classList.toggle('panel-open', open);
   if (tab) {
     S.layout.panelTab = tab;
     $$('[data-ptab]').forEach((b) => b.classList.toggle('active', b.dataset.ptab === tab));
@@ -883,54 +901,109 @@ function setupDrop() {
 
 // ---------- keyboard ----------
 
+function combo(id) {
+  return S.settings.shortcuts[id] || SHORTCUTS[id].combo;
+}
+
 function shortcutsHelp() {
-  const m = isMac ? '⌘' : 'Ctrl+';
-  const s = isMac ? '⇧' : 'Shift+';
-  const rows = [
-    [`${m}O`, 'Open file'], [`${m}S`, 'Save'], [`${s}${m}S`, 'Save as'], [`${m}P`, 'Print / PDF'],
-    [`${m}E`, 'Toggle Read / Edit'], [`${s}${m}E`, 'Source mode'], [`${m}F`, 'Find'], [`${m}G / ${s}${m}G`, 'Next / previous match'],
-    [`${m}\\`, 'Toggle sidebar'], [`${s}${m}L`, 'Toggle review / agent panel'], [`${s}${m}R`, 'Comment on selection'], [`${s}${m}Enter`, 'Hand off review prompt'],
-    [`⌥${m}P`, 'Present as slides (←/→, F fullscreen, N notes, T theme, A auto-play)'], [`⌥${m}M`, 'Mind map'],
-    [`${m}T / ${m}N / ${m}W`, 'New tab / window / close (browser)'], ['?', 'This help'],
+  const rows = Object.entries(SHORTCUTS).map(([id, def]) => [comboLabel(combo(id)), def.label]);
+  const extra = [
+    [`${isMac ? '⌘' : 'Ctrl+'}G`, 'Next / previous match'],
+    ['← → Space · F · N · T · A · ?', 'Presentation: navigate, fullscreen, notes, theme, auto-play, help'],
+    ['+ − 0 · 1–6 · D · ?', 'Mind map: zoom, fit, collapse to depth, download, help'],
+    [`${isMac ? '⌘' : 'Ctrl+'}T / N / W`, 'New tab / window / close (browser)'],
   ];
-  modal(`<h2>Keyboard shortcuts</h2><table class="keys">${rows.map(([k, d]) => `<tr><td><kbd>${k}</kbd></td><td>${d}</td></tr>`).join('')}</table>
-    <div class="row"><span class="spacer"></span><button class="btn primary" value="ok">Close</button></div>`);
+  modal(`<h2>${t('Keyboard Shortcuts')}</h2><p class="hint">${t('Quick access to all features')} · <button class="link" value="settings">${t('Customize…')}</button></p>
+    <table class="keys">${[...rows, ...extra].map(([k, d]) => `<tr><td><kbd>${k}</kbd></td><td>${t(d)}</td></tr>`).join('')}</table>
+    <div class="row"><span class="spacer"></span><button class="btn primary" value="ok">${t('Close')}</button></div>`,
+  (body, dlg) => {
+    dlg.onclose = () => { dlg.onclose = null; if (dlg.returnValue === 'settings') openSettings('shortcuts'); };
+  });
+}
+
+// Settings modal (same panel as the options page).
+let settingsUi;
+async function openSettings(tab) {
+  if (tab) sessionStorage.setItem('mc-settings-tab', tab);
+  const dlg = $('#settings-modal');
+  settingsUi?.destroy();
+  settingsUi = await mountSettings($('#settings-root'), { onClose: () => dlg.close() });
+  dlg.showModal();
+}
+
+function aboutDialog() {
+  const m = chrome.runtime.getManifest();
+  modal(`<div class="about"><img src="icons/128.png" width="72" height="72" alt=""><h2>MarkCraft</h2><p>v${m.version}</p>
+    <p>${t('Read, edit and review Markdown — right in Chrome.')}</p><p class="hint">${t('All processing happens locally in your browser. No data collection.')}</p></div>
+    <div class="row"><span class="spacer"></span><button class="btn primary" value="ok">${t('Close')}</button></div>`);
+}
+
+const SHORTCUT_ACTIONS = {
+  toggleFiles: () => setSidebar(!S.layout.sidebarOpen),
+  toggleToc: () => togglePanelTab('outline'),
+  toggleAnnotations: () => togglePanelTab('comments'),
+  toggleTheme: () => actions['toggle-theme'](),
+  toggleLayout: () => actions['toggle-layout'](),
+  toggleRaw: () => S.source && setMode(S.mode === 'source' ? 'read' : 'source'),
+  quickSettings: () => openSettings(),
+  searchFolder: () => actions['search-folder'](),
+  quickHighlight: () => S.source && review.annotate('highlight', 'yellow'),
+  comment: () => S.source && startComment(),
+  handoff: () => handoff(),
+  toggleEdit: () => S.source && setMode(S.mode === 'read' ? 'edit' : 'read'),
+  sourceMode: () => S.source && setMode(S.mode === 'source' ? 'read' : 'source'),
+  find: () => S.source && find.open(),
+  save: () => save(),
+  saveAs: () => save({ as: true }),
+  open: () => openFile(),
+  print: () => S.source && printDoc(),
+  present: () => S.source && startPresentation(),
+  mindmap: () => S.source && showMindMap(),
+  scrollTop: () => els.scroller.scrollTo({ top: 0, behavior: 'smooth' }),
+};
+
+function togglePanelTab(tab) {
+  const open = !$('#panel').hidden;
+  if (open && S.layout.panelTab === tab) setPanel(false);
+  else setPanel(true, tab);
 }
 
 function onKey(e) {
+  if ($('#settings-modal').open) return;
   const mod = isMac ? e.metaKey : e.ctrlKey;
-  const k = e.key.toLowerCase();
   const inField = e.target.matches?.('input, textarea, select, [contenteditable="true"], [contenteditable=""]') || e.target.closest?.('.ProseMirror');
-  if (mod && !e.altKey) {
-    const handlers = {
-      s: () => save({ as: e.shiftKey }),
-      o: () => openFile(),
-      f: () => !e.shiftKey && S.source && find.open(),
-      g: () => S.source && (find.isOpen ? find.step(e.shiftKey ? -1 : 1) : find.open()),
-      e: () => S.source && setMode(e.shiftKey ? (S.mode === 'source' ? 'read' : 'source') : S.mode === 'read' ? 'edit' : 'read'),
-      '\\': () => setSidebar(!S.layout.sidebarOpen),
-      p: () => S.source && printDoc(),
-      l: () => e.shiftKey && setPanel($('#panel').hidden, S.layout.panelTab),
-      r: () => e.shiftKey && S.source && startComment(),
-      enter: () => e.shiftKey && handoff(),
-    };
-    const h = handlers[k];
-    if (h && (k !== 'l' && k !== 'r' && k !== 'enter' ? true : e.shiftKey)) {
+  const pressed = comboFromEvent(e);
+  if (pressed) {
+    for (const id of Object.keys(SHORTCUTS)) {
+      if (combo(id) !== pressed) continue;
+      if (inField && !pressed.includes('Mod') && !pressed.includes('Alt')) break; // plain keys only outside text fields
       e.preventDefault();
       e.stopPropagation();
-      h();
+      SHORTCUT_ACTIONS[id]();
       return;
     }
   }
-  if (mod && e.altKey && S.source) {
-    if (e.code === 'KeyP') { e.preventDefault(); return startPresentation(); }
-    if (e.code === 'KeyM') { e.preventDefault(); return showMindMap(); }
+  if (mod && e.key.toLowerCase() === 'g' && S.source) {
+    e.preventDefault();
+    return find.isOpen ? find.step(e.shiftKey ? -1 : 1) : find.open();
   }
   if (e.key === 'Escape') {
     if (find.isOpen) find.close();
     hideFab();
+    closeMenus();
   }
   if (e.key === '?' && !inField && !mod) shortcutsHelp();
+}
+
+function closeMenus(except) {
+  for (const m of ['#actions-menu', '#fx-sort-menu', '#fx-more-menu']) if (m !== except) $(m).hidden = true;
+  $('[data-act="actions"]').classList.toggle('active', except === '#actions-menu');
+}
+
+function toggleMenu(sel) {
+  const open = $(sel).hidden;
+  closeMenus(open ? sel : null);
+  $(sel).hidden = !open;
 }
 
 // ---------- wiring ----------
@@ -983,7 +1056,7 @@ const explorer = new Explorer({
 const folders = setupFolderTools({
   explorer,
   toast,
-  showFiles: () => { setSidebar(true); showSide('files'); },
+  showFiles: () => setSidebar(true),
   openAt: async (href, query, newTab) => {
     if (newTab) return window.open(href, '_blank');
     await navigate(href);
@@ -1051,7 +1124,45 @@ const actions = {
     else if (S.source) window.open(URL.createObjectURL(new Blob([S.text], { type: 'text/plain;charset=utf-8' })), '_blank');
   },
   shortcuts: () => shortcutsHelp(),
-  settings: () => chrome.runtime.openOptionsPage(),
+  settings: () => openSettings(),
+  about: () => aboutDialog(),
+  actions: () => toggleMenu('#actions-menu'),
+  'toggle-edit': () => S.source && setMode(S.mode === 'read' ? 'edit' : 'read'),
+  'toggle-theme': async () => {
+    const order = ['auto', 'light', 'dark', 'sepia'];
+    const next = order[(order.indexOf(S.settings.theme) + 1) % order.length];
+    S.settings = await setSettings({ theme: next });
+    toast({ auto: t('Auto Theme'), light: t('Light Theme'), dark: t('Dark Theme'), sepia: t('Sepia Theme') }[next], '', 1200);
+  },
+  'toggle-layout': async () => {
+    S.settings = await setSettings({ layout: S.settings.layout === 'full' ? 'centered' : 'full' });
+    toast(S.settings.layout === 'full' ? t('Full-Width Layout') : t('Centered Layout'), '', 1200);
+  },
+  'scroll-top': () => els.scroller.scrollTo({ top: 0, behavior: 'smooth' }),
+  'search-folder': () => {
+    if (!explorer.root) { setSidebar(true); return toast(t('No folder is currently open')); }
+    setSidebar(true);
+    $('#fx-search-box').hidden = false;
+    $('#fx-search').focus();
+  },
+  'fx-filter': () => {
+    const box = $('#fx-filter-box');
+    box.hidden = !box.hidden;
+    if (box.hidden) { $('#fx-filter').value = ''; explorer.setFilter(''); } else $('#fx-filter').focus();
+  },
+  'fx-sort': () => { syncSortMenu(); toggleMenu('#fx-sort-menu'); },
+  'fx-more': () => toggleMenu('#fx-more-menu'),
+  'fx-refresh': () => explorer.refresh(),
+  'fx-expand': () => explorer.expandAll(),
+  'fx-collapse': () => explorer.collapseAll(),
+  'toc-search': () => {
+    const box = $('#toc-filter-box');
+    box.hidden = !box.hidden;
+    if (box.hidden) { $('#toc-filter').value = ''; outline.applyFilter(); } else $('#toc-filter').focus();
+  },
+  'toc-expand': () => outline.expandAll(),
+  'toc-collapse': () => outline.collapseAll(),
+  'plantuml-consent': () => plantumlConsent(),
   handoff: () => handoff(),
   'clear-comments': () => { if (review.items.length && confirm(t('Delete all review comments for this document?'))) review.clearAll(); },
   'ext-accept': () => acceptExternal(),
@@ -1061,14 +1172,60 @@ const actions = {
   'bookmark-folder': () => folders.toggleBookmark(),
   bookmarks: () => folders.toggleList(),
   'grant-folder': () => { hideBanner(); openFolder(); },
-  menu: () => { $('#main-menu').hidden = !$('#main-menu').hidden; },
 };
+
+function plantumlConsent() {
+  let host = S.settings.plantumlServer;
+  try { host = new URL(host).host; } catch {}
+  modal(`<h2>${t('Allow public diagram server?')}</h2>
+    <p>${escapeHtml(t('Rendering this diagram requires sending its source code to a third-party server ({server}).', { server: host }))}</p>
+    <p class="hint">${t('This is the only MarkCraft feature that sends any part of your document off your device. You can change your decision at any time in Settings → PlantUML.')}</p>
+    <div class="row"><span class="spacer"></span><button class="btn" value="later">${t('Decide later')}</button><button class="btn primary" value="agree">${t('Agree')}</button></div>`,
+  (body, dlg) => {
+    dlg.onclose = async () => {
+      dlg.onclose = null;
+      if (dlg.returnValue === 'agree') S.settings = await setSettings({ plantumlConsent: true, plugins: { ...S.settings.plugins, plantuml: true } });
+    };
+  });
+}
+
+function syncSortMenu() {
+  const L = S.layout;
+  $$('#fx-sort-menu [data-sort]').forEach((b) => b.classList.toggle('on', b.dataset.sort === L.fxSort));
+  $$('#fx-sort-menu [data-sort-dir]').forEach((b) => b.classList.toggle('on', (b.dataset.sortDir === 'desc') === L.fxSortDesc));
+  $('#fx-sort-menu [data-sort-toggle]').classList.toggle('on', L.fxFoldersFirst);
+  const txt = $('#fx-sort-menu [data-filter-type]');
+  txt.classList.toggle('on', L.fxShowTxt && S.settings.renderTxt);
+  txt.disabled = !S.settings.renderTxt;
+  txt.title = S.settings.renderTxt ? '' : t('Enable .txt rendering in Settings to use this filter');
+}
+
+$('#fx-sort-menu').addEventListener('click', (e) => {
+  const b = e.target.closest('button');
+  if (!b) return;
+  const L = S.layout;
+  if (b.dataset.sort) L.fxSort = b.dataset.sort;
+  if (b.dataset.sortDir) L.fxSortDesc = b.dataset.sortDir === 'desc';
+  if (b.dataset.sortToggle) L.fxFoldersFirst = !L.fxFoldersFirst;
+  if (b.dataset.filterType) L.fxShowTxt = !L.fxShowTxt;
+  saveLayout({ fxSort: L.fxSort, fxSortDesc: L.fxSortDesc, fxFoldersFirst: L.fxFoldersFirst, fxShowTxt: L.fxShowTxt });
+  syncSortMenu();
+  explorer.setOptions(explorerOptions());
+});
+
+function explorerOptions() {
+  const L = S.layout;
+  return {
+    sort: L.fxSort, desc: L.fxSortDesc, foldersFirst: L.fxFoldersFirst, showTxt: L.fxShowTxt && S.settings.renderTxt,
+    exclude: S.settings.excludeFoldersOn ? S.settings.excludeFolders : [],
+  };
+}
 
 document.addEventListener('click', (e) => {
   const btn = e.target.closest('[data-act]');
-  if (!e.target.closest('.menu-wrap')) $('#main-menu').hidden = true;
-  if (btn && actions[btn.dataset.act] && !btn.closest('#findbar, #composer, #agent-pane, #term-pane, .comment-card')) {
-    if (btn.closest('#main-menu') && btn.dataset.act !== 'menu') $('#main-menu').hidden = true;
+  if (!e.target.closest('.menu, .actions-grid, [data-act="actions"], [data-act="fx-sort"], [data-act="fx-more"]')) closeMenus();
+  if (btn && actions[btn.dataset.act] && !btn.closest('#findbar, #composer, #agent-pane, #term-pane, .comment-card, #settings-modal')) {
+    if (btn.closest('.menu, .actions-grid') ) closeMenus();
     actions[btn.dataset.act]();
     return;
   }
@@ -1089,7 +1246,6 @@ document.addEventListener('click', (e) => {
 });
 
 $$('#mode-switch button').forEach((b) => b.addEventListener('click', () => setMode(b.dataset.mode)));
-$$('[data-side]').forEach((b) => b.addEventListener('click', () => showSide(b.dataset.side)));
 $$('[data-ptab]').forEach((b) => b.addEventListener('click', () => setPanel(true, b.dataset.ptab)));
 fab.addEventListener('mousedown', (e) => e.preventDefault());
 fab.addEventListener('click', (e) => {
@@ -1120,9 +1276,7 @@ els.source.addEventListener('keydown', (e) => {
   document.execCommand('insertText', false, '  ');
 });
 
-$('#theme-select').addEventListener('change', async (e) => {
-  S.settings = await setSettings({ theme: e.target.value });
-});
+$('#fx-filter').addEventListener('input', (e) => explorer.setFilter(e.target.value));
 
 window.addEventListener('keydown', onKey, true);
 window.addEventListener('beforeunload', (e) => {
@@ -1146,21 +1300,24 @@ onSettingsChanged(async (settings) => {
   const prev = S.settings;
   S.settings = settings;
   applyTheme();
-  const rerender = ['theme', 'math', 'mermaid', 'codeLineNumbers', 'textDirection', 'plantumlServer'].some((k) => prev[k] !== settings[k]);
+  const keys = ['theme', 'plugins', 'lineBreaks', 'codeLineNumbers', 'textDirection', 'plantumlServer', 'plantumlConsent', 'frontMatterCard', 'localizeAlerts'];
+  const rerender = keys.some((k) => JSON.stringify(prev[k]) !== JSON.stringify(settings[k]));
   if (rerender && S.mode === 'read' && S.source) renderRead();
-  if (prev.pollInterval !== settings.pollInterval) startWatch();
+  if (prev.pollInterval !== settings.pollInterval || prev.autoRefresh !== settings.autoRefresh) startWatch();
+  if (['excludeFolders', 'excludeFoldersOn', 'renderTxt'].some((k) => JSON.stringify(prev[k]) !== JSON.stringify(settings[k]))) explorer.setOptions(explorerOptions());
   updateStats();
 });
 
 async function init() {
   [S.settings, S.layout] = await Promise.all([getSettings(), getLayout()]);
   setLanguage(S.settings.language);
+  hydrateIcons();
   localize();
   applyTheme();
   setupResizers();
   setupDrop();
+  explorer.setOptions(explorerOptions(), false);
   document.body.classList.toggle('sidebar-closed', !S.layout.sidebarOpen);
-  showSide(S.layout.sidebarTab);
   if (S.layout.panelOpen) setPanel(true, S.layout.panelTab);
   else $$('[data-ptab]').forEach((b) => b.classList.toggle('active', b.dataset.ptab === S.layout.panelTab));
   $$('[data-ppane]').forEach((p) => (p.hidden = p.dataset.ppane !== S.layout.panelTab));

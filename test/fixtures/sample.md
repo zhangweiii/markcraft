@@ -78,3 +78,16 @@ Alice -> Bob: hello
 ```
 
 مرحبا بالعالم، هذه فقرة باللغة العربية.
+
+## Plugins
+
+Water is H~2~O, area x^2^, ==marked==, ++inserted++ and :rocket: emoji. The HTML spec.
+
+*[HTML]: Hyper Text Markup Language
+
+Apple
+: A fruit
+
+::: tip Pro tip
+Containers work.
+:::

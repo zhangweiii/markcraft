@@ -4,3 +4,4 @@ dist
 scripts/key.pem
 native/config.json
 native/markcraft-host
+.DS_Store

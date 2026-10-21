@@ -52,7 +52,7 @@ export class Outline {
               `<span class="toc-twist${it.hasChildren ? '' : ' leaf'}"></span><span class="toc-text">${escapeHtml(it.text)}</span></div>`,
           )
           .join('')
-      : '<div class="empty-hint">No headings</div>';
+      : '<div class="empty-hint">No headings found</div>';
     this.applyFilter();
     this.spy();
   }
@@ -69,6 +69,16 @@ export class Outline {
       node.classList.toggle('collapsed', this.collapsed.has(it.i));
       node.hidden = q ? !it.text.toLowerCase().includes(q) : hiddenByCollapse;
     }
+  }
+
+  expandAll() {
+    this.collapsed.clear();
+    this.applyFilter();
+  }
+
+  collapseAll() {
+    this.collapsed = new Set(this.items.filter((it) => it.hasChildren).map((it) => it.i));
+    this.applyFilter();
   }
 
   scrollTo(i) {

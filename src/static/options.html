@@ -1,49 +1,5 @@
 <!doctype html>
 <html lang="en">
-<head><meta charset="utf-8"><title>MarkCraft Settings</title><link rel="icon" href="icons/32.png"><link rel="stylesheet" href="options.css"><script type="module" src="options.js"></script></head>
-<body>
-<main>
-  <h1><img src="icons/48.png" width="32" height="32" alt=""> MarkCraft Settings</h1>
-  <section>
-    <h2>Appearance</h2>
-    <label>Language <select name="language"><option value="auto">Automatic (browser)</option><option value="en">English</option><option value="zh-CN">简体中文</option></select></label>
-    <label>Theme <select name="theme"><option value="auto">Auto (system)</option><option value="light">Light</option><option value="dark">Dark</option><option value="sepia">Sepia</option></select></label>
-    <label>Font <select name="fontFamily"><option value="sans">Sans-serif</option><option value="serif">Serif</option><option value="mono">Monospace</option></select></label>
-    <label>Font size <input name="fontSize" type="number" min="11" max="28"> px</label>
-    <label>Content width <input name="contentWidth" type="number" min="480" max="2400" step="20"> px</label>
-    <label class="check"><input name="codeLineNumbers" type="checkbox"> Line numbers in code blocks</label>
-  </section>
-  <section>
-    <h2>Rendering</h2>
-    <label class="check"><input name="math" type="checkbox"> KaTeX math (<code>$…$</code>, <code>$$…$$</code>)</label>
-    <label class="check"><input name="mermaid" type="checkbox"> Mermaid diagrams</label>
-    <p class="hint">Graphviz (<code>dot</code>) and WaveDrom render locally. PlantUML needs a server and sends the diagram source to it — leave empty to keep it off.</p>
-    <label>PlantUML server <input name="plantumlServer" type="url" placeholder="https://www.plantuml.com/plantuml" style="flex:1"></label>
-    <label class="check"><input name="interceptHttp" type="checkbox"> Render raw Markdown served over http(s) (e.g. raw.githubusercontent.com)</label>
-    <label class="check"><input name="renderTxt" type="checkbox"> Render <code>.txt</code> files as Markdown (llms.txt, changelogs, notes)</label>
-    <label class="check"><input name="showStats" type="checkbox"> Show word count, reading time and reading progress</label>
-    <label>Text direction <select name="textDirection"><option value="auto">Automatic (per paragraph)</option><option value="ltr">Left to right</option><option value="rtl">Right to left</option></select></label>
-    <label>Open documents in <select name="defaultMode"><option value="read">Read mode</option><option value="edit">Edit (WYSIWYG) mode</option><option value="source">Source mode</option></select></label>
-  </section>
-  <section>
-    <h2>Files &amp; changes</h2>
-    <label class="check"><input name="autoAccept" type="checkbox"> Apply external changes automatically when there are no unsaved edits (otherwise show a diff banner)</label>
-    <label>Check local files every <input name="pollInterval" type="number" min="300" max="10000" step="100"> ms</label>
-    <p class="hint">Local <code>file://</code> files need “Allow access to file URLs”: <button class="link" id="ext">open extension details</button>. Saving to <code>file://</code> documents asks once for the file, or writes directly when the native helper is installed.</p>
-  </section>
-  <section>
-    <h2>Agent &amp; terminal</h2>
-    <label>Default agent <select name="agentCli"><option value="claude">Claude Code</option><option value="codex">Codex</option></select></label>
-    <p id="host-status" class="hint">Checking native helper…</p>
-    <p class="hint">Install the helper from the MarkCraft folder: <code>./native/install.sh</code> (extension id <code id="ext-id"></code>).</p>
-  </section>
-  <section>
-    <h2>Data</h2>
-    <button id="clear-recent">Clear recent documents</button>
-    <button id="clear-comments">Delete all review comments</button>
-    <button id="reset">Reset settings</button>
-  </section>
-  <p id="saved" class="hint" aria-live="polite"></p>
-</main>
-</body>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>MarkCraft Settings</title><link rel="icon" href="icons/32.png"><link rel="stylesheet" href="options-style.css"><script type="module" src="options.js"></script></head>
+<body><div id="settings-root"></div></body>
 </html>

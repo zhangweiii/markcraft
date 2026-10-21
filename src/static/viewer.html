@@ -6,93 +6,73 @@
   <title>MarkCraft</title>
   <link rel="icon" href="icons/32.png">
   <link rel="stylesheet" href="viewer-style.css">
+  <link rel="stylesheet" id="hljs-theme" disabled>
   <script type="module" src="viewer.js"></script>
 </head>
 <body class="loading">
-  <header id="topbar">
-    <button class="icon-btn" data-act="toggle-sidebar" title="Toggle sidebar (⌘\)"><svg viewBox="0 0 16 16"><path d="M2 3h12v10H2zM6 3v10" fill="none" stroke="currentColor" stroke-width="1.4"/></svg></button>
-    <div id="doc-title"><span id="doc-name">MarkCraft</span><span id="dirty-dot" title="Unsaved changes" hidden>●</span><span id="doc-path"></span></div>
-    <div id="save-status" aria-live="polite"></div>
-    <div class="spacer"></div>
-    <div class="seg" id="mode-switch" role="tablist" aria-label="View mode">
-      <button data-mode="read" title="Read (⌘E toggles)">Read</button>
-      <button data-mode="edit" title="Live WYSIWYG editing (⌘E toggles)">Edit</button>
-      <button data-mode="source" title="Markdown source (⌘⇧E)">Source</button>
-    </div>
-    <button class="icon-btn" data-act="present" title="Present as slides (⌥⌘P)"><svg viewBox="0 0 16 16"><path d="M2 3h12v8H2zM8 11v3M5 14h6" fill="none" stroke="currentColor" stroke-width="1.4"/></svg></button>
-    <button class="icon-btn" data-act="mindmap" title="Mind map (⌥⌘M)"><svg viewBox="0 0 16 16"><circle cx="4" cy="8" r="2" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M6 8h3M9 4v8M9 4h3M9 12h3M9 8h3" fill="none" stroke="currentColor" stroke-width="1.4"/></svg></button>
-    <button class="icon-btn" data-act="find" title="Find (⌘F)"><svg viewBox="0 0 16 16"><circle cx="7" cy="7" r="4.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="m10.5 10.5 3.5 3.5" stroke="currentColor" stroke-width="1.5"/></svg></button>
-    <button class="icon-btn" data-act="comment" title="Comment on selection (⌘⇧R)"><svg viewBox="0 0 16 16"><path d="M2.5 3h11v8h-6l-3 2.5V11h-2z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg></button>
-    <button class="icon-btn" data-act="toggle-panel" title="Review &amp; agent panel (⌘⇧L)"><svg viewBox="0 0 16 16"><path d="M2 3h12v10H2zM10 3v10" fill="none" stroke="currentColor" stroke-width="1.4"/></svg><span class="badge" id="comment-count" hidden></span></button>
-    <button class="btn primary small" data-act="save" title="Save (⌘S)" id="save-btn">Save</button>
-    <div class="menu-wrap">
-      <button class="icon-btn" data-act="menu" title="More"><svg viewBox="0 0 16 16"><circle cx="3" cy="8" r="1.3" fill="currentColor"/><circle cx="8" cy="8" r="1.3" fill="currentColor"/><circle cx="13" cy="8" r="1.3" fill="currentColor"/></svg></button>
-      <div class="menu" id="main-menu" hidden>
-        <button data-act="open">Open file…<kbd>⌘O</kbd></button>
-        <button data-act="open-folder">Open folder…</button>
-        <button data-act="new">New document</button>
-        <hr>
-        <button data-act="save">Save<kbd>⌘S</kbd></button>
-        <button data-act="save-as">Save as…<kbd>⇧⌘S</kbd></button>
-        <button data-act="reload">Reload from disk</button>
-        <hr>
-        <button data-act="present">Present as slides<kbd>⌥⌘P</kbd></button>
-        <button data-act="mindmap">Mind map<kbd>⌥⌘M</kbd></button>
-        <hr>
-        <button data-act="export-docx">Export Word (.docx)</button>
-        <button data-act="export-html">Export HTML…</button>
-        <button data-act="export-md">Download Markdown</button>
-        <button data-act="print">Print / Save as PDF…<kbd>⌘P</kbd></button>
-        <button data-act="copy-html">Copy as rich text</button>
-        <button data-act="copy-md">Copy Markdown</button>
-        <hr>
-        <div class="menu-row">Theme
-          <select id="theme-select">
-            <option value="auto">Auto</option><option value="light">Light</option><option value="dark">Dark</option><option value="sepia">Sepia</option>
-          </select>
-        </div>
-        <button data-act="view-raw">View raw file</button>
-        <button data-act="shortcuts">Keyboard shortcuts<kbd>?</kbd></button>
-        <button data-act="settings">Settings…</button>
-      </div>
-    </div>
-  </header>
+  <div id="progress" aria-hidden="true"><div></div></div>
 
-  <div id="main">
-    <aside id="sidebar">
-      <div class="side-tabs" role="tablist">
-        <button data-side="outline">Outline</button>
-        <button data-side="files">Files</button>
+  <div id="app">
+    <!-- Left: folder browser -->
+    <aside id="sidebar" class="side left">
+      <header class="side-head">
+        <span class="side-title" id="fx-title">Files</span>
+        <button class="icon-btn" id="fx-up" title="Parent folder" hidden><i data-icon="up" data-size="16"></i></button>
+        <button class="icon-btn" data-act="fx-filter" title="Search files..."><i data-icon="search" data-size="16"></i></button>
+        <button class="icon-btn" data-act="bookmarks" title="Bookmarks"><i data-icon="bookmark" data-size="16"></i></button>
+        <button class="icon-btn" data-act="fx-sort" title="Sort"><i data-icon="sort" data-size="16"></i></button>
+        <button class="icon-btn" data-act="fx-more" title="More options"><i data-icon="more" data-size="16"></i></button>
+        <button class="icon-btn" data-act="toggle-sidebar" title="Close Sidebar"><i data-icon="x" data-size="16"></i></button>
+      </header>
+      <div class="menu" id="fx-sort-menu" hidden>
+        <div class="menu-label">Sort</div>
+        <button data-sort="name">Name</button><button data-sort="modified">Modified</button><button data-sort="size">Size</button>
+        <hr><button data-sort-dir="asc">Ascending</button><button data-sort-dir="desc">Descending</button>
+        <hr><button data-sort-toggle="foldersFirst">Folders first</button>
+        <div class="menu-label">Type</div>
+        <button data-filter-type="txt">.txt</button>
       </div>
-      <div class="side-pane" data-pane="outline">
-        <input id="toc-filter" type="search" placeholder="Filter headings" spellcheck="false">
-        <nav id="toc"></nav>
+      <div class="menu" id="fx-more-menu" hidden>
+        <button data-act="open-folder"><i data-icon="folder-open" data-size="15"></i>Change Folder</button>
+        <button data-act="bookmark-folder"><i data-icon="star" data-size="15"></i><span id="fx-star-label">Add Bookmark</span></button>
+        <button data-act="fx-refresh"><i data-icon="refresh" data-size="15"></i>Refresh</button>
+        <button data-act="fx-expand"><i data-icon="expand" data-size="15"></i>Expand All</button>
+        <button data-act="fx-collapse"><i data-icon="collapse" data-size="15"></i>Collapse All</button>
+        <button data-act="search-folder"><i data-icon="search" data-size="15"></i>Search in Folder...</button>
       </div>
-      <div class="side-pane" data-pane="files" hidden>
-        <div class="fx-head"><button class="icon-btn small" id="fx-up" title="Parent folder" hidden>↑</button><span id="fx-title">Files</span>
-          <button class="icon-btn small" data-act="bookmark-folder" id="fx-star" title="Bookmark this folder">☆</button>
-          <button class="icon-btn small" data-act="bookmarks" title="Folder bookmarks">▾</button>
-          <button class="icon-btn small" data-act="open-folder" title="Open folder…">＋</button></div>
-        <div id="bookmarks" hidden></div>
-        <input id="fx-search" type="search" placeholder="Search in folder" spellcheck="false">
-        <div id="fx-results" hidden></div>
-        <div id="explorer"></div>
-      </div>
+      <span id="fx-star" hidden></span>
+      <div id="bookmarks" hidden></div>
+      <div class="side-search" id="fx-filter-box" hidden><i data-icon="search" data-size="14"></i><input id="fx-filter" type="search" placeholder="Search files..." spellcheck="false"></div>
+      <div class="side-search" id="fx-search-box" hidden><i data-icon="search" data-size="14"></i><input id="fx-search" type="search" placeholder="Search in folder" spellcheck="false"></div>
+      <div id="fx-results" hidden></div>
+      <div id="explorer"></div>
       <div class="resizer" data-resize="sidebar"></div>
     </aside>
 
-    <section id="content">
-      <div id="progress" aria-hidden="true"><div></div></div>
+    <!-- Center: document -->
+    <main id="content">
+      <div id="editbar" hidden>
+        <span class="eb-name"><span id="doc-name">MarkCraft</span><span id="dirty-dot" title="Unsaved changes" hidden></span></span>
+        <div class="segment" id="mode-switch" role="tablist" aria-label="View mode">
+          <button data-mode="read" title="Read (⌘E toggles)"><i data-icon="read" data-size="14"></i>Read</button>
+          <button data-mode="edit" title="Live WYSIWYG editing (⌘E toggles)"><i data-icon="edit" data-size="14"></i>Edit</button>
+          <button data-mode="source" title="Markdown source (⌘⇧E)"><i data-icon="raw" data-size="14"></i>Source</button>
+        </div>
+        <span id="save-status" aria-live="polite"></span>
+        <button class="btn small primary" data-act="save" id="save-btn" title="Save (⌘S)"><i data-icon="save" data-size="14"></i>Save</button>
+      </div>
       <div id="banner" hidden></div>
       <div id="findbar" hidden>
+        <i data-icon="search" data-size="15"></i>
         <input type="search" placeholder="Find" spellcheck="false" aria-label="Find in document">
         <span class="find-count"></span>
         <button class="icon-btn small toggle" data-act="case" title="Match case">Aa</button>
         <button class="icon-btn small toggle" data-act="word" title="Whole word">ab</button>
         <button class="icon-btn small toggle" data-act="regex" title="Regular expression">.*</button>
+        <span class="sep"></span>
         <button class="icon-btn small" data-act="prev" title="Previous (⇧Enter)">↑</button>
         <button class="icon-btn small" data-act="next" title="Next (Enter)">↓</button>
-        <button class="icon-btn small" data-act="close" title="Close (Esc)">✕</button>
+        <button class="icon-btn small" data-act="close" title="Close (Esc)"><i data-icon="x" data-size="15"></i></button>
       </div>
       <div id="scroller">
         <div id="welcome" hidden></div>
@@ -100,25 +80,44 @@
         <div id="editor" class="markdown-body" hidden></div>
         <textarea id="source" spellcheck="false" hidden></textarea>
       </div>
-      <footer id="statusbar"><span id="stats"></span><span class="spacer"></span><span id="progress-pct"></span></footer>
-    </section>
+      <div id="statusbar" class="pill"><span id="stats"></span><span id="progress-pct" hidden></span></div>
+    </main>
 
-    <aside id="panel" hidden>
+    <!-- Right: outline / annotations / agent / terminal -->
+    <aside id="panel" class="side right" hidden>
       <div class="resizer left" data-resize="panel"></div>
-      <div class="side-tabs" role="tablist">
-        <button data-ptab="comments">Review</button>
-        <button data-ptab="agent">Agent</button>
-        <button data-ptab="terminal">Terminal</button>
-        <button class="icon-btn small" data-act="toggle-panel" title="Close">✕</button>
+      <header class="side-head tabs">
+        <button data-ptab="outline" title="Table of Contents"><i data-icon="toc"></i></button>
+        <button data-ptab="comments" title="Annotations"><i data-icon="annotations"></i><span class="badge" id="comment-count" hidden></span></button>
+        <button data-ptab="agent" title="Ask Agent"><i data-icon="agent"></i></button>
+        <button data-ptab="terminal" title="Terminal"><i data-icon="terminal"></i></button>
+        <span class="spacer"></span>
+        <button class="icon-btn" data-act="toggle-panel" title="Close sidebar"><i data-icon="panel-right" data-size="17"></i></button>
+      </header>
+
+      <div class="panel-pane" data-ppane="outline">
+        <div class="pane-head"><span class="pane-title">Outline</span><span class="spacer"></span>
+          <button class="icon-btn small" data-act="toc-search" title="Search headings"><i data-icon="search" data-size="15"></i></button>
+          <button class="icon-btn small" data-act="toc-expand" title="Expand All"><i data-icon="expand" data-size="15"></i></button>
+          <button class="icon-btn small" data-act="toc-collapse" title="Collapse All"><i data-icon="collapse" data-size="15"></i></button></div>
+        <div class="side-search" id="toc-filter-box" hidden><i data-icon="search" data-size="14"></i><input id="toc-filter" type="search" placeholder="Search headings..." spellcheck="false"></div>
+        <nav id="toc"></nav>
       </div>
-      <div class="panel-pane" data-ppane="comments">
+
+      <div class="panel-pane" data-ppane="comments" hidden>
+        <div class="anno-filters" id="anno-filters">
+          <button data-afilter="highlight">Highlight <span>(0)</span></button>
+          <button data-afilter="underline">Underline <span>(0)</span></button>
+          <button data-afilter="comment">Comment <span>(0)</span></button>
+        </div>
         <div class="pane-actions">
-          <button class="btn small primary" data-act="handoff" title="Hand off review as a prompt (⌘⇧Enter)">Hand off…</button>
+          <button class="btn small primary" data-act="handoff" title="Hand off review as a prompt (⌘⇧Enter)"><i data-icon="sparkles" data-size="14"></i>Hand off…</button>
           <span class="spacer"></span>
-          <button class="link-btn" data-act="clear-comments">Clear all</button>
+          <button class="btn small ghost" data-act="clear-comments">Clear all</button>
         </div>
         <div id="comments"></div>
       </div>
+
       <div class="panel-pane" data-ppane="agent" id="agent-pane" hidden>
         <div id="agent-host" class="notice" hidden></div>
         <label class="field-label" for="agent-prompt">Ask an agent to change this document</label>
@@ -129,7 +128,7 @@
             <option value="codex" data-label="Codex">Codex</option>
           </select>
           <span class="spacer"></span>
-          <button class="link-btn" data-act="agent-copy">Copy prompt</button>
+          <button class="btn small ghost" data-act="agent-copy">Copy prompt</button>
           <button class="btn small" data-act="agent-stop" hidden>Stop</button>
           <button class="btn small primary" data-act="agent-run" title="⌘Enter">Run</button>
         </div>
@@ -138,32 +137,75 @@
         <div id="agent-log"></div>
         <div id="agent-result" hidden></div>
       </div>
+
       <div class="panel-pane" data-ppane="terminal" id="term-pane" hidden>
         <div id="term-host" class="notice" hidden>The terminal needs the native helper. Run <code>./native/install.sh</code> from the MarkCraft folder, then reload.</div>
-        <div class="term-head"><span id="term-cwd"></span><span class="spacer"></span><button class="link-btn" data-act="term-clear">Clear</button></div>
+        <div class="term-head"><span id="term-cwd"></span><span class="spacer"></span><button class="btn small ghost" data-act="term-clear">Clear</button></div>
         <pre id="term-out"></pre>
         <div class="term-line"><span>$</span><input id="term-input" spellcheck="false" autocomplete="off" placeholder="command (cd works; Ctrl+C stops)"></div>
       </div>
     </aside>
   </div>
 
-  <div id="composer" class="popover" hidden>
-    <div class="composer-quote"></div>
-    <textarea rows="3" placeholder="Add a review comment… (⌘Enter to save)"></textarea>
-    <div class="row"><span class="spacer"></span><button class="btn small" data-act="cancel">Cancel</button><button class="btn small primary" data-act="save">Comment</button></div>
+  <!-- Floating dock -->
+  <div id="dock">
+    <button class="fab-btn" id="scroll-top" data-act="scroll-top" title="Scroll to top (Home key)" hidden><i data-icon="up"></i></button>
+    <button class="fab-btn" data-act="actions" title="Actions"><i data-icon="zap"></i></button>
+    <button class="fab-btn" data-act="toggle-edit" title="Edit (⌘E)"><i data-icon="edit"></i></button>
+    <button class="fab-btn solid" data-act="toggle-layout" title="Toggle layout (Wide/Centered)"><i data-icon="centered" id="layout-icon"></i></button>
+    <button class="fab-btn solid" data-act="toggle-theme" title="Toggle theme (Light/Dark/Auto)"><i data-icon="sun" id="theme-icon"></i></button>
+    <button class="fab-btn solid" data-act="toggle-sidebar" title="Toggle Folder Browser sidebar"><i data-icon="folder"></i></button>
+    <button class="fab-btn solid" data-act="toggle-panel" title="Toggle Table of Contents sidebar"><i data-icon="toc"></i></button>
   </div>
 
-  <div id="selection-fab" class="fab" hidden>
+  <div id="actions-menu" class="actions-grid" hidden>
+    <div class="ag-section">
+      <button data-act="export-html"><i data-icon="html"></i>Export to HTML</button>
+      <button data-act="export-docx"><i data-icon="word"></i>Export to Word</button>
+      <button data-act="print"><i data-icon="print"></i>Print (Save PDF)</button>
+      <button data-act="present"><i data-icon="present"></i>Presentation Mode</button>
+    </div>
+    <div class="ag-section">
+      <button data-act="search-folder"><i data-icon="search"></i>Search in Folder</button>
+      <button data-act="mindmap"><i data-icon="mindmap"></i>Mind Map</button>
+      <button data-act="view-raw"><i data-icon="raw"></i>View Raw Data</button>
+      <button data-act="settings"><i data-icon="settings"></i>Open Settings</button>
+    </div>
+    <div class="ag-section">
+      <button data-act="open"><i data-icon="file"></i>Open File</button>
+      <button data-act="open-folder"><i data-icon="folder-open"></i>Open Folder</button>
+      <button data-act="new"><i data-icon="new"></i>New Document</button>
+      <button data-act="save-as"><i data-icon="save"></i>Save As</button>
+      <button data-act="copy-html"><i data-icon="clipboard"></i>Copy Rich Text</button>
+      <button data-act="copy-md"><i data-icon="copy"></i>Copy Markdown</button>
+      <button data-act="export-md"><i data-icon="download"></i>Download .md</button>
+      <button data-act="reload"><i data-icon="refresh"></i>Reload from Disk</button>
+    </div>
+    <div class="ag-section">
+      <button data-act="shortcuts"><i data-icon="keyboard"></i>Keyboard Shortcuts</button>
+      <button data-act="about"><i data-icon="info"></i>About MarkCraft</button>
+    </div>
+  </div>
+
+  <div id="composer" class="popover" hidden>
+    <div class="composer-quote"></div>
+    <textarea rows="3" placeholder="Write a comment..."></textarea>
+    <div class="row"><span class="spacer"></span><button class="btn small" data-act="cancel">Cancel</button><button class="btn small primary" data-act="save">Save</button></div>
+  </div>
+
+  <div id="selection-fab" class="sel-toolbar" hidden>
     <button data-anno="highlight" data-color="yellow" class="sw hl-yellow" title="Highlight yellow"></button>
     <button data-anno="highlight" data-color="green" class="sw hl-green" title="Highlight green"></button>
     <button data-anno="highlight" data-color="blue" class="sw hl-blue" title="Highlight blue"></button>
     <button data-anno="highlight" data-color="pink" class="sw hl-pink" title="Highlight pink"></button>
-    <button data-anno="underline" title="Underline"><u>U</u></button>
-    <button data-anno="comment" title="Comment (⌘⇧R)">💬 Comment</button>
+    <span class="sep"></span>
+    <button data-anno="underline" title="Underline"><i data-icon="underline" data-size="15"></i></button>
+    <button data-anno="comment" title="Comment (⌘⇧R)"><i data-icon="comment" data-size="15"></i></button>
   </div>
 
   <dialog id="modal"><form method="dialog" class="modal-body"></form></dialog>
-  <div id="drop-overlay" hidden><div>Drop a Markdown file or folder to open it</div></div>
+  <dialog id="settings-modal"><div id="settings-root"></div></dialog>
+  <div id="drop-overlay" hidden><div><i data-icon="folder-open" data-size="40"></i>Drop a Markdown file or folder to open it</div></div>
   <div id="toasts" aria-live="polite"></div>
 </body>
 </html>

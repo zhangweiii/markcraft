@@ -6,6 +6,11 @@ const out = 'dist';
 await rm(out, { recursive: true, force: true });
 await mkdir(out, { recursive: true });
 await cp('src/static', out, { recursive: true });
+// highlight.js themes offered in Settings → Appearance → Syntax Theme.
+await mkdir(`${out}/hljs`, { recursive: true });
+for (const theme of ['github', 'github-dark', 'atom-one-light', 'atom-one-dark', 'vs', 'vs2015', 'monokai', 'nord', 'tokyo-night-dark', 'stackoverflow-light', 'xcode']) {
+  await cp(`node_modules/highlight.js/styles/${theme}.min.css`, `${out}/hljs/${theme}.min.css`);
+}
 
 const common = {
   bundle: true,
@@ -20,7 +25,7 @@ const common = {
 const builds = [
   // Main viewer app: ESM with code splitting so heavy libs (mermaid, editor) load lazily.
   { ...common, entryPoints: { viewer: 'src/viewer/main.js', 'viewer-style': 'src/viewer/style.css', 'editor-style': 'src/viewer/editor.css', 'content-style': 'src/viewer/content.css' }, outdir: out, format: 'esm', splitting: true, chunkNames: 'chunks/[name]-[hash]' },
-  { ...common, entryPoints: { background: 'src/background.js', popup: 'src/popup.js', options: 'src/options.js' }, outdir: out, format: 'esm' },
+  { ...common, entryPoints: { background: 'src/background.js', popup: 'src/popup.js', options: 'src/options.js', 'popup-style': 'src/popup.css', 'options-style': 'src/options.css' }, outdir: out, format: 'esm' },
   { ...common, entryPoints: { detect: 'src/detect.js' }, outdir: out, format: 'iife' },
 ];
 

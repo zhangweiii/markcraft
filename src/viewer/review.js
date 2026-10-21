@@ -2,6 +2,7 @@
 import { db, uid } from '../shared/db.js';
 import { buildIndex, offsetOf, rangeFromOffsets, scrollRangeIntoView, supportsHighlights } from './textindex.js';
 import { escapeHtml } from './render.js';
+import { t } from '../shared/i18n.js';
 
 const CTX = 48;
 
@@ -26,6 +27,15 @@ export class Review {
     this.onChange = onChange;
     this.items = [];
     this.key = null;
+    this.filters = new Set(); // empty = show all kinds
+    this.filterEl = document.getElementById('anno-filters');
+    this.filterEl?.addEventListener('click', (e) => {
+      const b = e.target.closest('[data-afilter]');
+      if (!b) return;
+      const k = b.dataset.afilter;
+      this.filters.has(k) ? this.filters.delete(k) : this.filters.add(k);
+      this.paint();
+    });
 
     const ta = composer.querySelector('textarea');
     composer.querySelector('[data-act="save"]').addEventListener('click', () => this.commitComposer());
@@ -181,12 +191,21 @@ export class Review {
     const open = this.open.length;
     this.countEl.textContent = open || '';
     this.countEl.hidden = !open;
-    const sorted = [...this.items].sort((a, b) => (a._start ?? 1e12) - (b._start ?? 1e12));
-    const label = (i) => (i.kind === 'highlight' ? `<span class="kind-chip hl-${i.color || 'yellow'}">Highlight</span>` : i.kind === 'underline' ? '<span class="kind-chip ul">Underline</span>' : '');
+    const kindOf = (i) => i.kind || 'comment';
+    if (this.filterEl) {
+      for (const b of this.filterEl.querySelectorAll('[data-afilter]')) {
+        b.classList.toggle('on', this.filters.has(b.dataset.afilter));
+        b.querySelector('span').textContent = `(${this.items.filter((i) => kindOf(i) === b.dataset.afilter).length})`;
+      }
+    }
+    const visible = this.items.filter((i) => !this.filters.size || this.filters.has(kindOf(i)));
+    const sorted = [...visible.filter((i) => i._range), ...visible.filter((i) => !i._range)].sort((a, b) => (a._start ?? 1e12) - (b._start ?? 1e12));
+    const firstOrphan = sorted.findIndex((i) => !i._range);
+    const label = (i) => (i.kind === 'highlight' ? `<span class="kind-chip hl-${i.color || 'yellow'}">${t('Highlight')}</span>` : i.kind === 'underline' ? `<span class="kind-chip ul">${t('Underline')}</span>` : '');
     this.listEl.innerHTML = sorted.length
       ? sorted
           .map(
-            (i) => `<div class="comment-card kind-${i.kind || 'comment'}${i.resolved ? ' resolved' : ''}${i._range ? '' : ' orphan'}" data-id="${i.id}">
+            (i, n) => `${n === firstOrphan ? `<div class="unresolved-title" title="${t('These annotations could not be matched to the current document content.')}">${t('Unresolved')}</div>` : ''}<div class="comment-card kind-${i.kind || 'comment'}${i.resolved ? ' resolved' : ''}${i._range ? '' : ' orphan'}" data-id="${i.id}">
         <blockquote class="${i.kind === 'highlight' ? 'hl-' + (i.color || 'yellow') : ''}">${escapeHtml(i.quote.length > 220 ? i.quote.slice(0, 220) + '…' : i.quote)}</blockquote>
         <textarea rows="${i.comment ? 2 : 1}" spellcheck="true" placeholder="${i.kind === 'comment' ? 'Comment' : 'Add a note (optional)'}">${escapeHtml(i.comment || '')}</textarea>
         <div class="comment-meta">${label(i)}${i._range ? '' : '<span class="tag warn" title="The quoted text is no longer in the document">detached</span>'}
@@ -195,7 +214,9 @@ export class Review {
           <button class="link-btn danger" data-act="delete">Delete</button></div></div>`,
           )
           .join('')
-      : '<div class="empty-hint">Select text in the document to highlight, underline or comment on it (<kbd>⌘⇧R</kbd> comments). Annotations are kept per document and appear in print and exports.</div>';
+      : this.items.length
+        ? `<div class="empty-hint">${t('No annotations match the current filters')}</div>`
+        : `<div class="empty-hint"><b>${t('No annotations yet')}</b><br>${t('Select text to get started.')}</div>`;
   }
 
   // Bake annotations into a rendered copy (for HTML/Word exports).
