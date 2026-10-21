@@ -322,7 +322,18 @@ export async function mountSettings(root, { compact = false, onClose } = {}) {
     if (b.dataset.clear) return save({ [b.dataset.clear]: '' });
     if (b.dataset.rm) { const list = [...s[b.dataset.rm]]; list.splice(+b.dataset.i, 1); return save({ [b.dataset.rm]: list }); }
     if (b.dataset.consent) return save({ plantumlConsent: b.dataset.consent === 'grant', plugins: { ...s.plugins, plantuml: b.dataset.consent === 'grant' ? true : s.plugins.plantuml } });
-    if (b.dataset.record) { recording.key = b.dataset.record; render(); return; }
+    if (b.dataset.record) {
+      recording.key = b.dataset.record;
+      clearTimeout(recording.timer);
+      recording.timer = setTimeout(() => {
+        if (!recording.key) return;
+        recording.key = null;
+        render();
+        alert(t('No key captured - the shortcut may be reserved by the browser. Try a different combo.'));
+      }, 6000);
+      render();
+      return;
+    }
     if (b.dataset.unrecord) { const sc = { ...s.shortcuts }; delete sc[b.dataset.unrecord]; return save({ shortcuts: sc }); }
     if (b.dataset.reset) {
       const sec = SECTIONS.find((x) => x.id === b.dataset.reset);

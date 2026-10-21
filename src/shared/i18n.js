@@ -430,6 +430,15 @@ const ZH = {
   "Retry": "重试",
   "Show source": "显示源码",
   "Folder name cannot contain path separators (/ or \\\\)": "文件夹名不能包含路径分隔符（/ 或 \\\\）",
+  "No key captured - the shortcut may be reserved by the browser. Try a different combo.": "没有捕获到按键——该快捷键可能被浏览器占用，请换一个组合。",
+  "📝 Raw Markdown View": "📝 原始 Markdown 视图",
+  "✨ Rendered View": "✨ 渲染视图",
+  "⬆️ Scrolled to top": "⬆️ 已回到顶部",
+  "Folder access blocked": "文件夹访问被阻止",
+  "Your browser is blocking the File System Access API that MarkCraft needs to read local folders.": "你的浏览器阻止了 MarkCraft 读取本地文件夹所需的 File System Access API。",
+  "Open the URL below in a new tab.": "在新标签页中打开下面的地址。",
+  "Set the flag to “Enabled”.": "把该选项设为“Enabled”。",
+  "Fully quit and relaunch your browser - closing the tab is not enough.": "完全退出并重新启动浏览器——只关闭标签页不够。",
 };
 
 const DICTS = { zh: ZH };

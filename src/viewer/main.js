@@ -470,6 +470,11 @@ async function setupExplorerFor(src) {
 }
 
 async function openFolder() {
+  if (!window.showDirectoryPicker) {
+    return modal(`<h2>${t('Folder access blocked')}</h2><p>${t('Your browser is blocking the File System Access API that MarkCraft needs to read local folders.')}</p>
+      <ol><li>${t('Open the URL below in a new tab.')}<br><code>chrome://flags/#file-system-access-api</code></li><li>${t('Set the flag to “Enabled”.')}</li><li>${t('Fully quit and relaunch your browser - closing the tab is not enough.')}</li></ol>
+      <div class="row"><span class="spacer"></span><button class="btn primary" value="ok">${t('Close')}</button></div>`);
+  }
   let dir;
   try {
     dir = await showDirectoryPicker({ mode: 'readwrite' });
@@ -1010,7 +1015,7 @@ const SHORTCUT_ACTIONS = {
   toggleAnnotations: () => togglePanelTab('comments'),
   toggleTheme: () => actions['toggle-theme'](),
   toggleLayout: () => actions['toggle-layout'](),
-  toggleRaw: () => S.source && setMode(S.mode === 'source' ? 'read' : 'source'),
+  toggleRaw: () => { if (!S.source) return; const raw = S.mode !== 'source'; setMode(raw ? 'source' : 'read'); toast(raw ? t('📝 Raw Markdown View') : t('✨ Rendered View'), '', 1200); },
   quickSettings: () => openSettings(),
   searchFolder: () => actions['search-folder'](),
   quickHighlight: () => S.source && review.annotate('highlight', 'yellow'),
@@ -1025,7 +1030,7 @@ const SHORTCUT_ACTIONS = {
   print: () => S.source && printDoc(),
   present: () => S.source && startPresentation(),
   mindmap: () => S.source && showMindMap(),
-  scrollTop: () => els.scroller.scrollTo({ top: 0, behavior: 'smooth' }),
+  scrollTop: () => { els.scroller.scrollTo({ top: 0, behavior: 'smooth' }); toast(t('⬆️ Scrolled to top'), '', 1000); },
 };
 
 function togglePanelTab(tab) {

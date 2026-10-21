@@ -1,14 +1,21 @@
 {
   "name": "markcraft",
   "version": "1.1.0",
-  "description": "MarkCraft \u2013 Markdown viewer & editor Chrome extension",
+  "description": "Free, open-source Markdown viewer, editor and reviewer for Chrome",
   "scripts": {
     "build": "node build.mjs",
     "watch": "node build.mjs --watch",
     "test": "node scripts/test.mjs",
     "package": "node build.mjs && cd dist && zip -qr ../markcraft.zip . && cd .. && ls -la markcraft.zip"
   },
-  "keywords": [],
+  "keywords": [
+    "markdown",
+    "chrome-extension",
+    "mermaid",
+    "katex",
+    "viewer",
+    "editor"
+  ],
   "author": "",
   "license": "MIT",
   "type": "module",

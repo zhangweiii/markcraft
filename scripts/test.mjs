@@ -1,5 +1,5 @@
 // End-to-end smoke test: loads dist/ into Chromium and exercises the viewer.
-// Usage: CH=/path/to/chrome node scripts/test.mjs
+// Usage: npm test   (optionally CH=/path/to/chrome to use a specific Chromium build)
 import { chromium } from 'playwright';
 import { cp, mkdtemp, readFile, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
@@ -13,11 +13,11 @@ const sample = path.join(work, 'sample.md');
 
 // With a custom profile Chrome looks for native hosts inside the profile directory.
 const profile = await mkdtemp(path.join(process.env.TMPDIR || tmpdir(), 'mc-profile-'));
-const hostManifest = path.join(process.env.HOME, 'Library/Application Support/Google/Chrome/NativeMessagingHosts/com.markcraft.host.json');
+const hostManifest = path.join(process.env.HOME, process.platform === 'darwin' ? 'Library/Application Support/Google/Chrome/NativeMessagingHosts/com.markcraft.host.json' : '.config/google-chrome/NativeMessagingHosts/com.markcraft.host.json');
 await cp(hostManifest, path.join(profile, 'NativeMessagingHosts/com.markcraft.host.json')).catch(() => {});
 const ctx = await chromium.launchPersistentContext(profile, {
   headless: !process.env.HEADED,
-  executablePath: process.env.CH,
+  executablePath: process.env.CH || chromium.executablePath(),
   args: [`--disable-extensions-except=${ext}`, `--load-extension=${ext}`, '--lang=en-US'],
   viewport: { width: 1300, height: 900 },
   locale: 'en-US',
