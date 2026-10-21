@@ -1,0 +1,6 @@
+node_modules
+dist
+*.zip
+scripts/key.pem
+native/config.json
+native/markcraft-host

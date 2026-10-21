@@ -1,0 +1,166 @@
+// End-to-end smoke test: loads dist/ into Chromium and exercises the viewer.
+// Usage: CH=/path/to/chrome node scripts/test.mjs
+import { chromium } from 'playwright';
+import { cp, mkdtemp, readFile, writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
+
+const root = path.resolve(import.meta.dirname, '..');
+const ext = path.join(root, 'dist');
+const work = await mkdtemp(path.join(process.env.TMPDIR || tmpdir(), 'mc-test-'));
+await cp(path.join(root, 'test/fixtures'), work, { recursive: true });
+const sample = path.join(work, 'sample.md');
+
+// With a custom profile Chrome looks for native hosts inside the profile directory.
+const profile = await mkdtemp(path.join(process.env.TMPDIR || tmpdir(), 'mc-profile-'));
+const hostManifest = path.join(process.env.HOME, 'Library/Application Support/Google/Chrome/NativeMessagingHosts/com.markcraft.host.json');
+await cp(hostManifest, path.join(profile, 'NativeMessagingHosts/com.markcraft.host.json')).catch(() => {});
+const ctx = await chromium.launchPersistentContext(profile, {
+  headless: !process.env.HEADED,
+  executablePath: process.env.CH,
+  args: [`--disable-extensions-except=${ext}`, `--load-extension=${ext}`],
+  viewport: { width: 1300, height: 900 },
+});
+let failures = 0;
+const check = (name, ok, extra = '') => {
+  console.log(`${ok ? '✓' : '✗'} ${name}${extra ? ' — ' + extra : ''}`);
+  if (!ok) failures++;
+};
+
+const page = await ctx.newPage();
+const errors = [];
+page.on('pageerror', (e) => errors.push(e.message));
+page.on('dialog', (d) => d.accept());
+page.on('requestfailed', (r) => errors.push('requestfailed ' + r.url()));
+page.on('console', (m) => m.type() === 'error' && errors.push(m.text()));
+
+await page.goto('file://' + sample);
+await page.waitForURL(/viewer\.html/, { timeout: 10000 }).catch(() => {});
+check('file:// .md redirects to viewer', page.url().includes('viewer.html'), page.url());
+await page.waitForSelector('#doc h1', { timeout: 10000 });
+await page.waitForTimeout(1500);
+if (process.env.SHOTS) await page.screenshot({ path: path.join(process.env.SHOTS, 'read.png') });
+
+const info = await page.evaluate(() => ({
+  h1: document.querySelector('#doc h1')?.textContent,
+  toc: [...document.querySelectorAll('#toc .toc-item')].map((e) => e.textContent),
+  hljs: !!document.querySelector('#doc .hljs-keyword'),
+  katex: document.querySelectorAll('#doc .katex').length,
+  mermaid: !!document.querySelector('#doc .mermaid-diagram svg'),
+  mermaidErr: document.querySelector('.mermaid-error-msg')?.textContent,
+  alert: !!document.querySelector('#doc .markdown-alert-note'),
+  footnote: !!document.querySelector('#doc .footnotes'),
+  tasks: document.querySelectorAll('#doc input[type=checkbox]').length,
+  table: !!document.querySelector('#doc .table-wrap table'),
+  frontMatter: !!document.querySelector('#doc details.front-matter'),
+  img: document.querySelector('#doc img')?.src?.slice(0, 5),
+  imgLoaded: document.querySelector('#doc img')?.naturalWidth,
+  link: document.querySelector('#doc a[href*="other.md"]')?.href,
+  files: [...document.querySelectorAll('#explorer .fx-row')].map((e) => e.textContent),
+  title: document.title,
+}));
+check('renders heading', info.h1 === 'MarkCraft Sample');
+check('outline lists headings', info.toc.length >= 8, info.toc.join(' | '));
+check('syntax highlighting', info.hljs);
+check('KaTeX math', info.katex >= 2, String(info.katex));
+check('Mermaid diagram', info.mermaid, info.mermaidErr || '');
+check('GitHub alert', info.alert);
+check('footnotes', info.footnote);
+check('task list checkboxes', info.tasks === 2);
+check('table', info.table);
+check('front matter', info.frontMatter);
+check('local image loads', info.img === 'blob:' && info.imgLoaded > 0, `${info.img} ${info.imgLoaded}`);
+check('relative .md link → viewer', info.link?.includes('viewer.html?file='), info.link);
+check('file explorer lists folder', info.files.includes('sample.md') && info.files.includes('sub'), info.files.join(','));
+
+// Find
+await page.keyboard.press('Meta+f');
+await page.keyboard.type('searchterm');
+await page.waitForTimeout(300);
+check('find counts matches', (await page.textContent('.find-count')) === '1 / 2', await page.textContent('.find-count'));
+await page.keyboard.press('Enter');
+check('find steps to next', (await page.textContent('.find-count')) === '2 / 2');
+await page.keyboard.press('Escape');
+
+// External change → banner with diff
+const orig = await readFile(sample, 'utf8');
+await writeFile(sample, orig.replace('Intro paragraph', 'Changed intro paragraph'));
+await page.waitForSelector('#banner:not([hidden])', { timeout: 5000 }).catch(() => {});
+const bannerText = await page.textContent('#banner').catch(() => '');
+check('external change shows diff banner', /changed on disk/.test(bannerText) && /\+1/.test(bannerText), bannerText.replace(/\s+/g, ' '));
+await page.click('[data-act="ext-accept"]');
+await page.waitForTimeout(400);
+check('accept applies change', (await page.textContent('#doc p')).startsWith('Changed intro'));
+
+// Task toggle marks dirty
+await page.click('#doc input[type=checkbox] >> nth=0');
+check('task toggle marks dirty', await page.isVisible('#dirty-dot'));
+const st = await page.evaluate(() => window.__markcraft.S.text.includes('- [x] Unchecked task'));
+check('task toggle edits source', st);
+
+// Source mode
+await page.click('[data-mode="source"]');
+check('source mode shows markdown', (await page.inputValue('#source')).includes('# MarkCraft Sample'));
+
+// Edit (WYSIWYG) mode
+check('no errors in read mode', errors.length === 0, errors.slice(0, 5).join(' || '));
+const readErrors = errors.length;
+await page.click('[data-mode="edit"]');
+await page.waitForSelector('#editor .ProseMirror', { timeout: 15000 }).catch(() => {});
+const editorOk = await page.evaluate(() => !!document.querySelector('#editor .ProseMirror h1'));
+check('WYSIWYG editor loads', editorOk);
+if (editorOk) {
+  await page.click('#editor .ProseMirror h1');
+  await page.keyboard.press('End');
+  await page.keyboard.press('Enter');
+  await page.keyboard.type('## Typed heading');
+  await page.keyboard.press('Enter');
+  await page.keyboard.type('Some **bold** text');
+  await page.waitForTimeout(400);
+  if (process.env.SHOTS) await page.screenshot({ path: path.join(process.env.SHOTS, 'edit.png') });
+  const md = await page.evaluate(() => window.__markcraft.S.text);
+  check('typing markdown syntax creates heading', /## Typed heading/.test(md));
+  check('inline **bold** input rule', /\*\*bold\*\*/.test(md), md.split('\n').find((l) => l.includes('Some')));
+}
+
+// Review comment
+await page.click('[data-mode="read"]');
+await page.waitForTimeout(500);
+await page.evaluate(() => {
+  const p = [...document.querySelectorAll('#doc p')].find((x) => x.textContent.includes('Final paragraph'));
+  const r = document.createRange();
+  r.setStart(p.firstChild, 0);
+  r.setEnd(p.firstChild, 15);
+  getSelection().removeAllRanges();
+  getSelection().addRange(r);
+});
+await page.keyboard.press('Meta+Shift+r');
+await page.waitForSelector('#composer:not([hidden])', { timeout: 2000 }).catch(() => {});
+check('comment composer opens', await page.isVisible('#composer'));
+await page.keyboard.type('Make this punchier');
+await page.keyboard.press('Meta+Enter');
+await page.waitForTimeout(300);
+const prompt = await page.evaluate(() => window.__markcraft.review.buildPrompt('sample.md'));
+check('comment saved & prompt built', prompt.includes('Final paragraph') && prompt.includes('Make this punchier'));
+
+// Save via native host if installed, else skip
+const host = await page.evaluate(() => window.__markcraft.native.ping(true));
+if (host) {
+  await page.keyboard.press('Meta+s');
+  await page.waitForTimeout(800);
+  check('save writes file (native host)', (await readFile(sample, 'utf8')).includes('## Typed heading'));
+} else console.log('- native host not installed; skipping save test');
+
+// Navigate via relative link
+await page.click('#doc a[href*="other.md"]');
+await page.waitForSelector('#doc h1:text("Other document")', { timeout: 5000 }).catch(() => {});
+check('relative link opens other doc in-app', (await page.textContent('#doc h1')) === 'Other document');
+
+await page.screenshot({ path: path.join(work, 'screenshot.png') });
+if (process.env.SHOTS) await page.screenshot({ path: path.join(process.env.SHOTS, 'other.png') });
+// Crepe paints relative inline images once before we can swap in the resolved URL.
+const later = errors.slice(readErrors).filter((e) => !/ERR_FILE_NOT_FOUND|requestfailed chrome-extension:\/\/[^/]+\/img\//.test(e));
+check('no unexpected page errors', later.length === 0, later.slice(0, 5).join(' || '));
+console.log(`\n${failures ? failures + ' failed' : 'all passed'} — workdir ${work}`);
+await ctx.close();
+process.exit(failures ? 1 : 0);

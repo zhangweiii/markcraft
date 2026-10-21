@@ -1,0 +1,16 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>MarkCraft</title><link rel="stylesheet" href="popup.css"><script type="module" src="popup.js"></script></head>
+<body>
+  <header><img src="icons/32.png" width="20" height="20" alt=""><b>MarkCraft</b><span class="spacer"></span><button id="settings" title="Settings">⚙</button></header>
+  <div id="file-warning" class="notice" hidden>Local <code>file://</code> Markdown needs <b>Allow access to file URLs</b>. <button class="link" id="enable">Enable…</button></div>
+  <div class="actions">
+    <button data-q="?welcome=1">Open file…</button>
+    <button data-q="?welcome=1&folder=1">Open folder…</button>
+    <button data-q="?new=1">New document</button>
+  </div>
+  <div id="page-action" hidden><button id="render-page">Render this page as Markdown</button></div>
+  <h3>Recent</h3>
+  <ul id="recent"></ul>
+</body>
+</html>

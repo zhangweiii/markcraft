@@ -1,0 +1,16 @@
+// Renders the extension icon SVG to PNGs with headless Chromium.
+import { chromium } from 'playwright';
+const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128">
+<defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#3b82f6"/><stop offset="1" stop-color="#6d28d9"/></linearGradient></defs>
+<rect x="6" y="6" width="116" height="116" rx="28" fill="url(#g)"/>
+<path d="M26 92V36h12l14 20 14-20h12v56H66V56L52 75 38 56v36z" fill="#fff"/>
+<path d="M90 36h12v34h12l-18 22-18-22h12z" fill="#fff" opacity=".92"/>
+</svg>`;
+const browser = await chromium.launch({ executablePath: process.env.CH });
+const page = await browser.newPage();
+for (const size of [16, 32, 48, 128]) {
+  await page.setViewportSize({ width: size, height: size });
+  await page.setContent(`<style>html,body{margin:0;background:transparent}</style>${svg.replace('<svg ', `<svg width="${size}" height="${size}" `)}`);
+  await page.screenshot({ path: `src/static/icons/${size}.png`, omitBackground: true });
+}
+await browser.close();
