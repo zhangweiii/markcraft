@@ -69,7 +69,13 @@
         <nav id="toc"></nav>
       </div>
       <div class="side-pane" data-pane="files" hidden>
-        <div class="fx-head"><button class="icon-btn small" id="fx-up" title="Parent folder" hidden>↑</button><span id="fx-title">Files</span><button class="icon-btn small" data-act="open-folder" title="Open folder…">＋</button></div>
+        <div class="fx-head"><button class="icon-btn small" id="fx-up" title="Parent folder" hidden>↑</button><span id="fx-title">Files</span>
+          <button class="icon-btn small" data-act="bookmark-folder" id="fx-star" title="Bookmark this folder">☆</button>
+          <button class="icon-btn small" data-act="bookmarks" title="Folder bookmarks">▾</button>
+          <button class="icon-btn small" data-act="open-folder" title="Open folder…">＋</button></div>
+        <div id="bookmarks" hidden></div>
+        <input id="fx-search" type="search" placeholder="Search in folder" spellcheck="false">
+        <div id="fx-results" hidden></div>
         <div id="explorer"></div>
       </div>
       <div class="resizer" data-resize="sidebar"></div>

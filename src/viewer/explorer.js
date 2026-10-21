@@ -11,7 +11,10 @@ function parseListing(html, base) {
   for (const m of html.matchAll(/addRow\("((?:\\.|[^"\\])*)","((?:\\.|[^"\\])*)",(\d)/g)) {
     const name = JSON.parse(`"${m[1]}"`);
     if (name === '..' || name === '.') continue;
-    out.push({ name, kind: m[3] === '1' ? 'dir' : 'file', url: new URL(JSON.parse(`"${m[2]}"`), base).href });
+    const isDir = m[3] === '1';
+    let href = JSON.parse(`"${m[2]}"`);
+    if (isDir && !href.endsWith('/')) href += '/'; // so children resolve inside it
+    out.push({ name, kind: isDir ? 'dir' : 'file', url: new URL(href, base).href });
   }
   return out;
 }
@@ -132,6 +135,43 @@ export class Explorer {
       }
     }
     sessionStorage.setItem('mc-expanded', JSON.stringify([...this.expanded]));
+  }
+
+  // Depth-first walk of every Markdown file under the root.
+  async *walk(node = null, depth = 0) {
+    node ||= { kind: 'dir', name: '', path: '', ...(this.root.type === 'url' ? { url: this.root.url } : { handle: this.root.handle }) };
+    if (depth > 12) return;
+    let items;
+    try { items = await this.list(node); } catch { return; }
+    for (const child of items) {
+      if (child.kind === 'dir') yield* this.walk(child, depth + 1);
+      else yield child;
+    }
+  }
+
+  async readFile(node) {
+    if (node.url) return (await fetch(node.url, { cache: 'no-store' })).text();
+    return (await node.handle.getFile()).text();
+  }
+
+  // Full-text search; calls onHit(file, matches) as results arrive.
+  async search(query, onHit, signal) {
+    const q = query.toLowerCase();
+    let files = 0;
+    for await (const file of this.walk()) {
+      if (signal.aborted || files++ > 3000) break;
+      const text = await this.readFile(file).catch(() => '');
+      const lower = text.toLowerCase();
+      if (!lower.includes(q) && !file.name.toLowerCase().includes(q)) continue;
+      const matches = [];
+      const lines = text.split('\n');
+      for (let i = 0; i < lines.length && matches.length < 5; i++) {
+        const at = lines[i].toLowerCase().indexOf(q);
+        if (at >= 0) matches.push({ line: i + 1, text: lines[i], at });
+      }
+      onHit(file, matches, lower.split(q).length - 1);
+    }
+    return files;
   }
 
   markCurrent(key) {

@@ -89,6 +89,21 @@ check('external link indicator', info.extIcon);
 check('file explorer lists .txt', info.files.includes('llms.txt'));
 check('file explorer lists folder', info.files.includes('sample.md') && info.files.includes('sub'), info.files.join(','));
 
+// Search in folder + bookmarks
+await page.click('[data-side="files"]');
+await page.fill('#fx-search', 'Back to');
+await page.waitForSelector('#fx-results .sr-line', { timeout: 5000 }).catch(() => {});
+check('search in folder finds other.md', (await page.textContent('#fx-results').catch(() => '')).includes('sub/other.md'));
+await page.fill('#fx-search', '');
+await page.dispatchEvent('#fx-search', 'input');
+await page.click('#fx-star');
+await page.waitForTimeout(300);
+check('folder bookmark added', (await page.textContent('#fx-star')) === '★');
+await page.click('[data-act="bookmarks"]');
+check('bookmark list shows folder', (await page.locator('#bookmarks .bm-row').count()) === 1);
+await page.click('[data-act="bookmarks"]');
+await page.click('[data-side="outline"]');
+
 // Lightbox
 await page.click('#doc img.zoomable');
 check('image lightbox opens', await page.isVisible('.zoomer'));

@@ -10,6 +10,7 @@ import { renderDiff, diffStats } from './diffview.js';
 import { sourceFromQuery, sourceFromHandle, NewSource, HandleSource, UrlSource, MD_EXT, VIEWER, PICKER_TYPES } from './sources.js';
 import * as native from './native.js';
 import { textStats, formatStats, Zoomer, attachZoom } from './extras.js';
+import { setupFolderTools } from './folders.js';
 
 const $ = (sel) => document.querySelector(sel);
 const $$ = (sel) => [...document.querySelectorAll(sel)];
@@ -977,6 +978,19 @@ const explorer = new Explorer({
   onOpen: (href, newTab) => navigate(href, newTab),
 });
 
+const folders = setupFolderTools({
+  explorer,
+  toast,
+  showFiles: () => { setSidebar(true); showSide('files'); },
+  openAt: async (href, query, newTab) => {
+    if (newTab) return window.open(href, '_blank');
+    await navigate(href);
+    find.open();
+    find.input.value = query;
+    find.search(true);
+  },
+});
+
 const review = new Review({
   listEl: $('#comments'),
   countEl: $('#comment-count'),
@@ -1042,6 +1056,8 @@ const actions = {
   'ext-dismiss': () => dismissExternal(),
   'ext-diff': () => showExternalDiff(),
   'banner-close': () => hideBanner(),
+  'bookmark-folder': () => folders.toggleBookmark(),
+  bookmarks: () => folders.toggleList(),
   'grant-folder': () => { hideBanner(); openFolder(); },
   menu: () => { $('#main-menu').hidden = !$('#main-menu').hidden; },
 };
