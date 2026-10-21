@@ -1,11 +1,12 @@
 {
   "name": "markcraft",
   "version": "1.0.0",
-  "description": "MarkCraft – Markdown viewer & editor Chrome extension",
+  "description": "MarkCraft \u2013 Markdown viewer & editor Chrome extension",
   "scripts": {
     "build": "node build.mjs",
     "watch": "node build.mjs --watch",
-    "test": "node scripts/test.mjs"
+    "test": "node scripts/test.mjs",
+    "package": "node build.mjs && cd dist && zip -qr ../markcraft.zip . && cd .. && ls -la markcraft.zip"
   },
   "keywords": [],
   "author": "",
