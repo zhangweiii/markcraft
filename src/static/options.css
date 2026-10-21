@@ -7,7 +7,7 @@ section { background: var(--card); border: 1px solid var(--border); border-radiu
 h2 { margin: 0 0 4px; font-size: 15px; }
 label { display: flex; align-items: center; gap: 8px; }
 label.check { align-items: flex-start; } label.check input { margin-top: 4px; }
-select, input[type=number] { padding: 4px 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); }
+select, input[type=number], input[type=url] { padding: 4px 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); }
 input[type=number] { width: 90px; }
 .hint { color: var(--muted); font-size: 13px; margin: 0; }
 .ok { color: #1a7f37; } .bad { color: #cf222e; }

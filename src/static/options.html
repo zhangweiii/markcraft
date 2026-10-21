@@ -16,7 +16,12 @@
     <h2>Rendering</h2>
     <label class="check"><input name="math" type="checkbox"> KaTeX math (<code>$…$</code>, <code>$$…$$</code>)</label>
     <label class="check"><input name="mermaid" type="checkbox"> Mermaid diagrams</label>
+    <p class="hint">Graphviz (<code>dot</code>) and WaveDrom render locally. PlantUML needs a server and sends the diagram source to it — leave empty to keep it off.</p>
+    <label>PlantUML server <input name="plantumlServer" type="url" placeholder="https://www.plantuml.com/plantuml" style="flex:1"></label>
     <label class="check"><input name="interceptHttp" type="checkbox"> Render raw Markdown served over http(s) (e.g. raw.githubusercontent.com)</label>
+    <label class="check"><input name="renderTxt" type="checkbox"> Render <code>.txt</code> files as Markdown (llms.txt, changelogs, notes)</label>
+    <label class="check"><input name="showStats" type="checkbox"> Show word count, reading time and reading progress</label>
+    <label>Text direction <select name="textDirection"><option value="auto">Automatic (per paragraph)</option><option value="ltr">Left to right</option><option value="rtl">Right to left</option></select></label>
     <label>Open documents in <select name="defaultMode"><option value="read">Read mode</option><option value="edit">Edit (WYSIWYG) mode</option><option value="source">Source mode</option></select></label>
   </section>
   <section>

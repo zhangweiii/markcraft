@@ -62,3 +62,19 @@ See [other doc](sub/other.md) and ![logo](img/logo.png).
 ### Deep heading
 
 Final paragraph mentioning searchterm twice: searchterm.
+
+## More diagrams
+
+```dot
+digraph G { a -> b; b -> c; }
+```
+
+```wavedrom
+{ signal: [ { name: "clk", wave: "p...." }, { name: "dat", wave: "x.34x", data: ["A", "B"] } ] }
+```
+
+```plantuml
+Alice -> Bob: hello
+```
+
+مرحبا بالعالم، هذه فقرة باللغة العربية.

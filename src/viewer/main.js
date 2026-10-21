@@ -9,6 +9,7 @@ import { AgentPanel, TerminalPanel } from './agent.js';
 import { renderDiff, diffStats } from './diffview.js';
 import { sourceFromQuery, sourceFromHandle, NewSource, HandleSource, UrlSource, MD_EXT, VIEWER, PICKER_TYPES } from './sources.js';
 import * as native from './native.js';
+import { textStats, formatStats, Zoomer, attachZoom } from './extras.js';
 
 const $ = (sel) => document.querySelector(sel);
 const $$ = (sel) => [...document.querySelectorAll(sel)];
@@ -118,13 +119,51 @@ async function renderRead({ flashChanges = false } = {}) {
     for (const child of els.doc.children) if (!seen.has(child.outerHTML)) child.classList.add('changed-flash');
     setTimeout(() => els.doc.querySelectorAll('.changed-flash').forEach((c) => c.classList.remove('changed-flash')), 2600);
   }
+  applyDirection(els.doc);
+  fitTables(els.doc);
+  attachZoom(els.doc, zoomer);
   afterContentChange();
   maybeShowImageHint();
+}
+
+const zoomer = new Zoomer();
+
+// Per-paragraph direction detection for RTL scripts, or a forced direction.
+function applyDirection(root) {
+  const dir = S.settings.textDirection;
+  root.dir = dir === 'auto' ? '' : dir;
+  if (dir !== 'auto') return;
+  for (const el of root.querySelectorAll('p, li, h1, h2, h3, h4, h5, h6, blockquote, td, th, dt, dd, figcaption, summary')) el.dir = 'auto';
+}
+
+// Narrow tables keep sticky headers; only wide ones become horizontally scrollable.
+function fitTables(root) {
+  for (const wrap of root.querySelectorAll('.table-wrap')) {
+    wrap.classList.toggle('wide', wrap.firstElementChild.scrollWidth > wrap.clientWidth + 1);
+  }
+}
+
+function updateStats() {
+  const bar = $('#statusbar');
+  bar.hidden = !S.settings.showStats || !S.source;
+  $('#progress').hidden = bar.hidden || S.mode === 'source';
+  if (bar.hidden) return;
+  $('#stats').textContent = formatStats(textStats(S.text.replace(/```[\s\S]*?```/g, ' ').replace(/[#>*_`~|\[\]()-]/g, ' ')));
+  updateProgress();
+}
+
+function updateProgress() {
+  const sc = els.scroller;
+  const max = sc.scrollHeight - sc.clientHeight;
+  const pct = max <= 0 ? 100 : Math.round((sc.scrollTop / max) * 100);
+  $('#progress > div').style.width = pct + '%';
+  $('#progress-pct').textContent = S.mode === 'source' ? '' : pct + '%';
 }
 
 function afterContentChange() {
   if (S.mode === 'source') outline.buildFromSource(S.text);
   else outline.build();
+  updateStats();
   review.paint();
   find.refresh();
 }
@@ -196,6 +235,7 @@ async function ensureEditor() {
     resolveAsset: (href) => S.source.resolveAsset(href),
     uploadImage,
     isDark,
+    getSettings: () => S.settings,
     onChange: (md, isBaseline) => {
       S.text = isBaseline ? startText : md;
       S.editorText = S.text;
@@ -996,7 +1036,8 @@ document.addEventListener('selectionchange', () => {
   clearTimeout(updateFab.t);
   updateFab.t = setTimeout(updateFab, 150);
 });
-els.scroller.addEventListener('scroll', hideFab, { passive: true });
+els.scroller.addEventListener('scroll', () => { hideFab(); updateProgress(); }, { passive: true });
+window.addEventListener('resize', () => { if (S.mode === 'read') fitTables(els.doc); });
 
 let sourceTimer;
 els.source.addEventListener('input', () => {
@@ -1034,9 +1075,10 @@ onSettingsChanged(async (settings) => {
   const prev = S.settings;
   S.settings = settings;
   applyTheme();
-  const rerender = ['theme', 'math', 'mermaid', 'codeLineNumbers'].some((k) => prev[k] !== settings[k]);
+  const rerender = ['theme', 'math', 'mermaid', 'codeLineNumbers', 'textDirection', 'plantumlServer'].some((k) => prev[k] !== settings[k]);
   if (rerender && S.mode === 'read' && S.source) renderRead();
   if (prev.pollInterval !== settings.pollInterval) startWatch();
+  updateStats();
 });
 
 async function init() {

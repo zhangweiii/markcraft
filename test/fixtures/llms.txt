@@ -1,0 +1,3 @@
+# llms.txt
+
+> Plain text rendered as **Markdown**.

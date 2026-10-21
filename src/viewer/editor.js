@@ -1,6 +1,7 @@
 // Live WYSIWYG editor (Milkdown Crepe): Markdown syntax turns into formatting as
 // you type, and pasted Markdown is parsed into rich content.
-import { FRONT_MATTER, mermaidSvg, katexHtml, escapeHtml } from './render.js';
+import { FRONT_MATTER, katexHtml, escapeHtml } from './render.js';
+import { DIAGRAM_LANGS, renderDiagram } from './diagrams.js';
 
 let cssLoaded = false;
 
@@ -14,19 +15,20 @@ function loadCss() {
 }
 
 // Live previews for diagram/math code blocks inside the editor.
-function renderPreview(dark) {
+function renderPreview(dark, getSettings) {
   return (language, content, apply) => {
     const lang = (language || '').toLowerCase();
     if (!content.trim()) return null;
-    if (lang === 'mermaid') {
-      mermaidSvg(content, dark())
+    const kind = DIAGRAM_LANGS[lang];
+    if (kind) {
+      renderDiagram(kind, content, { dark: dark(), settings: getSettings() })
         .then((svg) => {
           const div = document.createElement('div');
-          div.className = 'mermaid-diagram';
+          div.className = `diagram ${kind}-diagram`;
           div.innerHTML = svg;
           apply(div);
         })
-        .catch((e) => apply(`<div class="mermaid-error-msg">${escapeHtml(String(e.message || e).split('\n')[0])}</div>`));
+        .catch((e) => apply(`<div class="diagram-error-msg">${escapeHtml(String(e.message || e).split('\n')[0])}</div>`));
       return undefined;
     }
     if (lang === 'math' || lang === 'latex' || lang === 'tex' || lang === 'katex') return katexHtml(content);
@@ -34,7 +36,7 @@ function renderPreview(dark) {
   };
 }
 
-export async function createEditor({ root, markdown, resolveAsset, uploadImage, onChange, isDark }) {
+export async function createEditor({ root, markdown, resolveAsset, uploadImage, onChange, isDark, getSettings }) {
   loadCss();
   // Front matter is not Markdown; keep it out of the editor and re-attach on change.
   const fm = FRONT_MATTER.exec(markdown);
@@ -52,7 +54,7 @@ export async function createEditor({ root, markdown, resolveAsset, uploadImage, 
         inlineOnUpload: uploadImage,
         blockOnUpload: uploadImage,
       },
-      [Crepe.Feature.CodeMirror]: { renderPreview: renderPreview(isDark) },
+      [Crepe.Feature.CodeMirror]: { renderPreview: renderPreview(isDark, getSettings) },
       [Crepe.Feature.Placeholder]: { text: 'Start writing… type / for commands', mode: 'doc' },
     },
   });

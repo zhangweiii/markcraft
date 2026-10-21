@@ -106,7 +106,7 @@
 
 .markdown-body p, .markdown-body blockquote, .markdown-body ul, .markdown-body ol, .markdown-body dl,
 .markdown-body table, .markdown-body pre, .markdown-body details, .markdown-body .table-wrap,
-.markdown-body .markdown-alert, .markdown-body .mermaid-diagram, .markdown-body .math-block {
+.markdown-body .markdown-alert, .markdown-body .diagram, .markdown-body .math-block {
   margin-top: 0;
   margin-bottom: 1em;
 }
@@ -129,6 +129,10 @@
 
 .markdown-body a { color: var(--link); text-decoration: none; }
 .markdown-body a:hover { text-decoration: underline; }
+.markdown-body a[target='_blank']:not(:has(img))::after {
+  content: ''; display: inline-block; width: 0.7em; height: 0.7em; margin-left: 0.18em; vertical-align: 0.05em; opacity: 0.55;
+  background: currentColor; -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Cpath d='M6 2h8v8h-2V5.4l-7.3 7.3-1.4-1.4L10.6 4H6z'/%3E%3C/svg%3E") center / contain no-repeat;
+}
 .markdown-body strong { font-weight: 600; }
 .markdown-body hr { height: 0.25em; margin: 1.5em 0; padding: 0; background: var(--border-soft); border: 0; }
 .markdown-body img { max-width: 100%; box-sizing: content-box; background: transparent; }
@@ -162,7 +166,9 @@
 .markdown-body pre .line-numbers { user-select: none; color: var(--muted); text-align: right; white-space: pre; font-family: var(--mono); opacity: 0.6; }
 .markdown-body pre.with-line-numbers code { flex: 1; min-width: 0; }
 
-.markdown-body .table-wrap { overflow-x: auto; }
+.markdown-body .table-wrap.wide { overflow-x: auto; }
+.markdown-body thead th { position: sticky; top: 0; z-index: 1; background: var(--bg); box-shadow: inset 0 -1px 0 var(--border); }
+.markdown-body .table-wrap.wide thead th { position: static; }
 .markdown-body table { border-spacing: 0; border-collapse: collapse; width: max-content; max-width: 100%; }
 .markdown-body table th { font-weight: 600; }
 .markdown-body table th, .markdown-body table td { padding: 6px 13px; border: 1px solid var(--border); }
@@ -195,10 +201,12 @@
 .markdown-body .math-block { overflow-x: auto; overflow-y: hidden; text-align: center; }
 .markdown-body .katex { font-size: 1.1em; }
 .markdown-body .math-error { color: var(--caution); }
-.markdown-body .mermaid-diagram { text-align: center; overflow-x: auto; }
-.markdown-body .mermaid-diagram svg { max-width: 100%; height: auto; }
-.markdown-body .mermaid-error-msg { color: var(--caution); font-size: 0.85em; text-align: left; margin-bottom: 0.5em; }
-.markdown-body .mermaid-error pre { text-align: left; }
+.markdown-body .diagram { position: relative; text-align: center; overflow-x: auto; }
+.markdown-body .diagram svg { max-width: 100%; height: auto; }
+.markdown-body .wavedrom-diagram svg { background: transparent; }
+.markdown-body .diagram-error-msg { color: var(--caution); font-size: 0.85em; text-align: left; margin-bottom: 0.5em; }
+.markdown-body .diagram-error-msg.notice-msg { color: var(--muted); }
+.markdown-body .diagram-error pre { text-align: left; }
 
 /* highlight.js tokens */
 .hljs-doctag, .hljs-keyword, .hljs-meta .hljs-keyword, .hljs-template-tag, .hljs-template-variable, .hljs-type, .hljs-variable.language_ { color: var(--hl-keyword); }

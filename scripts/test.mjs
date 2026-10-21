@@ -56,6 +56,14 @@ const info = await page.evaluate(() => ({
   img: document.querySelector('#doc img')?.src?.slice(0, 5),
   imgLoaded: document.querySelector('#doc img')?.naturalWidth,
   link: document.querySelector('#doc a[href*="other.md"]')?.href,
+  graphviz: !!document.querySelector('#doc .graphviz-diagram svg'),
+  wavedrom: !!document.querySelector('#doc .wavedrom-diagram svg'),
+  plantumlNotice: !!document.querySelector('#doc .plantuml-diagram .notice-msg'),
+  diagErr: [...document.querySelectorAll('.diagram-error-msg:not(.notice-msg)')].map((e) => e.textContent).join(';'),
+  rtl: [...document.querySelectorAll('#doc p')].some((p) => p.dir === 'auto' && getComputedStyle(p).direction === 'rtl'),
+  stats: document.querySelector('#stats')?.textContent,
+  sticky: getComputedStyle(document.querySelector('#doc thead th')).position,
+  extIcon: getComputedStyle(document.querySelector('#doc a[target=_blank]'), '::after').content !== 'none',
   files: [...document.querySelectorAll('#explorer .fx-row')].map((e) => e.textContent),
   title: document.title,
 }));
@@ -71,7 +79,25 @@ check('table', info.table);
 check('front matter', info.frontMatter);
 check('local image loads', info.img === 'blob:' && info.imgLoaded > 0, `${info.img} ${info.imgLoaded}`);
 check('relative .md link → viewer', info.link?.includes('viewer.html?file='), info.link);
+check('Graphviz diagram', info.graphviz, info.diagErr);
+check('WaveDrom diagram', info.wavedrom, info.diagErr);
+check('PlantUML is opt-in (notice shown)', info.plantumlNotice);
+check('RTL paragraph auto-direction', info.rtl);
+check('word count & reading time', /words · .* min read/.test(info.stats || ''), info.stats);
+check('sticky table header', info.sticky === 'sticky');
+check('external link indicator', info.extIcon);
+check('file explorer lists .txt', info.files.includes('llms.txt'));
 check('file explorer lists folder', info.files.includes('sample.md') && info.files.includes('sub'), info.files.join(','));
+
+// Lightbox
+await page.click('#doc img.zoomable');
+check('image lightbox opens', await page.isVisible('.zoomer'));
+await page.keyboard.press('Escape');
+check('lightbox closes on Esc', !(await page.isVisible('.zoomer')));
+await page.hover('#doc .graphviz-diagram');
+await page.click('#doc .graphviz-diagram .diagram-zoom');
+check('diagram fullscreen zoom', await page.isVisible('.zoomer svg'));
+await page.keyboard.press('Escape');
 
 // Find
 await page.keyboard.press('Meta+f');
@@ -155,6 +181,13 @@ if (host) {
 await page.click('#doc a[href*="other.md"]');
 await page.waitForSelector('#doc h1:text("Other document")', { timeout: 5000 }).catch(() => {});
 check('relative link opens other doc in-app', (await page.textContent('#doc h1')) === 'Other document');
+
+// .txt rendered as Markdown
+const p2 = await ctx.newPage();
+await p2.goto('file://' + path.join(work, 'llms.txt'));
+await p2.waitForSelector('#doc h1', { timeout: 8000 }).catch(() => {});
+check('.txt rendered as Markdown', (await p2.textContent('#doc h1').catch(() => '')) === 'llms.txt');
+await p2.close();
 
 await page.screenshot({ path: path.join(work, 'screenshot.png') });
 if (process.env.SHOTS) await page.screenshot({ path: path.join(process.env.SHOTS, 'other.png') });

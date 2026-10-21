@@ -2,7 +2,7 @@
 import { db, storeHandle } from '../shared/db.js';
 import * as native from './native.js';
 
-export const MD_EXT = /\.(md|markdown|mdown|mkd|mkdn|mdwn|mdtxt|mdtext|mdx|rmd|qmd)$/i;
+export const MD_EXT = /\.(md|markdown|mdown|mkd|mkdn|mdwn|mdtxt|mdtext|mdx|rmd|qmd|txt)$/i;
 export const VIEWER = chrome.runtime.getURL('viewer.html');
 export const PICKER_TYPES = [{ description: 'Markdown', accept: { 'text/markdown': ['.md', '.markdown', '.mdown', '.mkd', '.mdx', '.txt'] } }];
 

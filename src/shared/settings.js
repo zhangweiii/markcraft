@@ -6,9 +6,13 @@ export const DEFAULTS = {
   contentWidth: 860,
   defaultMode: 'read', // read | edit | source
   interceptHttp: true, // render .md served over http(s) too
+  renderTxt: true, // render .txt files (llms.txt, changelogs, notes) as Markdown
+  showStats: true, // word count, reading time and progress
+  textDirection: 'auto', // auto | ltr | rtl
   autoAccept: false, // apply external changes without the banner when there are no unsaved edits
   pollInterval: 1000,
   mermaid: true,
+  plantumlServer: '', // empty = off; PlantUML needs a server, so it is opt-in
   math: true,
   codeLineNumbers: false,
   agentCli: 'claude', // claude | codex

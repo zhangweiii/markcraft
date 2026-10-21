@@ -1,5 +1,5 @@
 // Flattens the text nodes of a container so string offsets can be mapped back to DOM Ranges.
-const SKIP = 'script,style,.code-tools,.line-numbers,.katex-mathml,.mermaid-error-msg,[data-noindex]';
+const SKIP = 'script,style,.code-tools,.line-numbers,.katex-mathml,.diagram-error-msg,.diagram-zoom,[data-noindex]';
 
 export function buildIndex(root) {
   const nodes = [];

@@ -8,6 +8,7 @@ import { markedHighlight } from 'marked-highlight';
 import hljs from 'highlight.js';
 import katex from 'katex';
 import DOMPurify from 'dompurify';
+import { DIAGRAM_LANGS, renderDiagrams } from './diagrams.js';
 
 export const FRONT_MATTER = /^---\r?\n([\s\S]*?)\r?\n(?:---|\.\.\.)\r?\n?/;
 const TASK_ITEM = /^(\s*(?:>\s*)*(?:[-*+]|\d+[.)])\s+)\[([ xX])\]/;
@@ -60,7 +61,7 @@ function createMarked(settings) {
       langPrefix: 'hljs language-',
       highlight(code, lang) {
         const language = (lang || '').split(/[\s{]/)[0].toLowerCase();
-        if (language === 'mermaid' || language === 'math') return escapeHtml(code);
+        if (DIAGRAM_LANGS[language] || language === 'math') return escapeHtml(code);
         if (language && hljs.getLanguage(language)) return hljs.highlight(code, { language, ignoreIllegals: true }).value;
         return escapeHtml(code);
       },
@@ -134,15 +135,6 @@ export function taskPositions(text) {
   return out;
 }
 
-let mermaidPromise;
-let mermaidSeq = 0;
-async function getMermaid(dark) {
-  mermaidPromise ||= import('mermaid').then((m) => m.default);
-  const mermaid = await mermaidPromise;
-  mermaid.initialize({ startOnLoad: false, securityLevel: 'strict', theme: dark ? 'dark' : 'default', fontFamily: 'inherit' });
-  return mermaid;
-}
-
 const COPY_ICON = '<svg viewBox="0 0 16 16" width="14" height="14"><path fill="currentColor" d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 0 1 0 1.5h-1.5a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-1.5a.75.75 0 0 1 1.5 0v1.5A1.75 1.75 0 0 1 9.25 16h-7.5A1.75 1.75 0 0 1 0 14.25Z"/><path fill="currentColor" d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0 1 14.25 11h-7.5A1.75 1.75 0 0 1 5 9.25Zm1.75-.25a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-7.5a.25.25 0 0 0-.25-.25Z"/></svg>';
 
 /**
@@ -161,8 +153,10 @@ export async function enhance(root, ctx) {
       pre.replaceWith(div);
       continue;
     }
-    if (lang === 'mermaid' && ctx.settings.mermaid) {
-      pre.classList.add('mermaid-pending');
+    const kind = DIAGRAM_LANGS[lang.toLowerCase()];
+    if (kind && (kind !== 'mermaid' || ctx.settings.mermaid)) {
+      pre.classList.add('diagram-pending');
+      pre.dataset.kind = kind;
       pre.dataset.source = code.textContent;
       continue;
     }
@@ -236,37 +230,9 @@ export async function enhance(root, ctx) {
     }),
   );
 
-  await renderMermaid(root, ctx.dark);
-}
-
-export async function mermaidSvg(source, dark) {
-  const mermaid = await getMermaid(dark);
-  const id = 'mermaid-' + ++mermaidSeq;
-  try {
-    return (await mermaid.render(id, source)).svg;
-  } finally {
-    document.getElementById('d' + id)?.remove();
-  }
+  await renderDiagrams(root, ctx);
 }
 
 export function katexHtml(tex) {
   return renderKatex(tex, true);
-}
-
-export async function renderMermaid(root, dark) {
-  const blocks = [...root.querySelectorAll('pre.mermaid-pending')];
-  if (!blocks.length) return;
-  for (const pre of blocks) {
-    const source = pre.dataset.source;
-    const fig = document.createElement('div');
-    fig.className = 'mermaid-diagram';
-    fig.dataset.source = source;
-    try {
-      fig.innerHTML = await mermaidSvg(source, dark);
-    } catch (e) {
-      fig.classList.add('mermaid-error');
-      fig.innerHTML = `<div class="mermaid-error-msg">Mermaid: ${escapeHtml(String(e.message || e).split('\n')[0])}</div><pre>${escapeHtml(source)}</pre>`;
-    }
-    pre.replaceWith(fig);
-  }
 }
