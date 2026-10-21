@@ -1,4 +1,5 @@
 // Reading aids: statistics, progress, image lightbox, zoomable diagrams.
+import { t } from '../shared/i18n.js';
 
 const CJK = /[぀-ヿ㐀-䶿一-鿿豈-﫿가-힯]/g;
 
@@ -12,8 +13,8 @@ export function textStats(text) {
 
 export function formatStats({ words, chars, minutes }) {
   const n = (x) => x.toLocaleString();
-  const read = minutes < 1 ? '< 1 min read' : `${Math.round(minutes)} min read`;
-  return `${n(words)} words · ${n(chars)} characters · ${read}`;
+  const read = minutes < 1 ? t('< 1 min read') : t('{m} min read', { m: Math.round(minutes) });
+  return t('{n} words · {c} characters · {m}', { n: n(words), c: n(chars), m: read });
 }
 
 // Pan/zoom overlay used for images (with gallery) and diagrams.

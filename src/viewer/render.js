@@ -9,6 +9,7 @@ import hljs from 'highlight.js';
 import katex from 'katex';
 import DOMPurify from 'dompurify';
 import { DIAGRAM_LANGS, renderDiagrams } from './diagrams.js';
+import { t } from '../shared/i18n.js';
 
 export const FRONT_MATTER = /^---\r?\n([\s\S]*?)\r?\n(?:---|\.\.\.)\r?\n?/;
 const TASK_ITEM = /^(\s*(?:>\s*)*(?:[-*+]|\d+[.)])\s+)\[([ xX])\]/;
@@ -103,7 +104,7 @@ export function renderMarkdown(text, settings) {
     ADD_ATTR: ['target', 'checked', 'align', 'encoding'],
     ALLOW_DATA_ATTR: true,
   });
-  if (frontMatter) html = `<details class="front-matter"><summary>Front matter</summary><pre>${escapeHtml(frontMatter)}</pre></details>` + html;
+  if (frontMatter) html = `<details class="front-matter"><summary>${t('Front matter')}</summary><pre>${escapeHtml(frontMatter)}</pre></details>` + html;
   return html;
 }
 
@@ -166,7 +167,7 @@ export async function enhance(root, ctx) {
     if (lang) tools.innerHTML = `<span class="code-lang">${escapeHtml(lang)}</span>`;
     const btn = document.createElement('button');
     btn.className = 'code-copy';
-    btn.title = 'Copy code';
+    btn.title = t('Copy code');
     btn.innerHTML = COPY_ICON;
     btn.addEventListener('click', async () => {
       await navigator.clipboard.writeText(code.textContent);

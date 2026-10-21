@@ -1,6 +1,7 @@
 // Folder bookmarks and full-text search across the open folder.
 import { db } from '../shared/db.js';
 import { escapeHtml } from './render.js';
+import { t } from '../shared/i18n.js';
 
 const $ = (s) => document.querySelector(s);
 
@@ -56,7 +57,7 @@ export function setupFolderTools({ explorer, openAt, toast, showFiles }) {
       toast('Bookmark removed');
     } else {
       marks.push(root.type === 'url' ? { key, name: rootName(root), type: 'url', url: root.url, path: decodeURIComponent(new URL(root.url).pathname) } : { key, name: rootName(root), type: 'handle', id: root.id, path: root.handle.name });
-      toast(`Bookmarked “${rootName(root)}”`);
+      toast(t('Bookmarked “{name}”', { name: rootName(root) }));
     }
     await setBookmarks(marks);
     refreshStar();
@@ -122,8 +123,8 @@ export function setupFolderTools({ explorer, openAt, toast, showFiles }) {
       results.append(div);
     }, signal);
     if (signal.aborted) return;
-    if (!hits) results.innerHTML = `<div class="empty-hint">No matches in ${scanned} file${scanned === 1 ? '' : 's'}</div>`;
-    else results.insertAdjacentHTML('afterbegin', `<div class="fx-searching">${hits} file${hits === 1 ? '' : 's'} · ${scanned} searched</div>`);
+    if (!hits) results.innerHTML = `<div class="empty-hint">${t('No matches in {n} files', { n: scanned })}</div>`;
+    else results.insertAdjacentHTML('afterbegin', `<div class="fx-searching">${t('{n} files · {m} searched', { n: hits, m: scanned })}</div>`);
   }
 
   input.addEventListener('input', () => {

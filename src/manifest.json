@@ -1,30 +1,75 @@
 {
   "manifest_version": 3,
-  "name": "MarkCraft – Markdown Viewer & Editor",
+  "name": "__MSG_name__",
   "short_name": "MarkCraft",
-  "description": "Render, edit and review Markdown in Chrome: GFM, TOC, find, live reload with diffs, WYSIWYG editing, review comments and AI agent hand-off.",
+  "description": "__MSG_description__",
   "version": "0.0.0",
   "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAkzIqms/J6JFwAIqw3DdEpRvEGBQvELoM2k/MpPeHVpFIXkTmAjB0suapRk/Jd8UETLCG/qwNw+6yjqvMJzeRACgoJdRyFSiuTg2F7yc1DGgpT0NTur/m59ED+RyaZfKtdZ870G1ML7HEmmfcMpjvhQL/nsR841w4eU/5XT9YAWqbw0G/Ah8cOspPemAJeYJFWv3VJC2KGzs82E7wLYuKHYRAFNTY22giwPuAMJj5TrnMBIGye63M7wtycybVCtyp3EfBJuaLSF9QQnSM2uwXZQKIOC2RPqQSDLkPRTkhneeGYKQyq5jrcpNjyZWlHfDCxpH0FT0LFMem3ntQ09fQRwIDAQAB",
   "minimum_chrome_version": "110",
-  "icons": { "16": "icons/16.png", "32": "icons/32.png", "48": "icons/48.png", "128": "icons/128.png" },
-  "permissions": ["storage", "unlimitedStorage", "contextMenus", "nativeMessaging", "clipboardWrite"],
-  "host_permissions": ["<all_urls>"],
-  "background": { "service_worker": "background.js", "type": "module" },
+  "icons": {
+    "16": "icons/16.png",
+    "32": "icons/32.png",
+    "48": "icons/48.png",
+    "128": "icons/128.png"
+  },
+  "permissions": [
+    "storage",
+    "unlimitedStorage",
+    "contextMenus",
+    "nativeMessaging",
+    "clipboardWrite"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
   "content_scripts": [
     {
-      "matches": ["file:///*", "http://*/*", "https://*/*"],
-      "js": ["detect.js"],
+      "matches": [
+        "file:///*",
+        "http://*/*",
+        "https://*/*"
+      ],
+      "js": [
+        "detect.js"
+      ],
       "run_at": "document_start"
     }
   ],
-  "action": { "default_popup": "popup.html", "default_title": "MarkCraft" },
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "MarkCraft"
+  },
   "options_page": "options.html",
-  "web_accessible_resources": [{ "resources": ["viewer.html"], "matches": ["<all_urls>"] }],
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "viewer.html"
+      ],
+      "matches": [
+        "<all_urls>"
+      ]
+    }
+  ],
   "commands": {
-    "open-file": { "suggested_key": { "default": "Alt+Shift+O" }, "description": "Open a Markdown file in MarkCraft" },
-    "new-doc": { "suggested_key": { "default": "Alt+Shift+N" }, "description": "New Markdown document" }
+    "open-file": {
+      "suggested_key": {
+        "default": "Alt+Shift+O"
+      },
+      "description": "__MSG_cmdOpen__"
+    },
+    "new-doc": {
+      "suggested_key": {
+        "default": "Alt+Shift+N"
+      },
+      "description": "__MSG_cmdNew__"
+    }
   },
   "content_security_policy": {
     "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'"
-  }
+  },
+  "default_locale": "en"
 }

@@ -1,11 +1,13 @@
 import { DEFAULTS, getSettings, setSettings } from './shared/settings.js';
 import { db } from './shared/db.js';
+import { setLanguage, localize } from './shared/i18n.js';
 
 const form = document.querySelector('main');
 const saved = document.getElementById('saved');
 
 async function load() {
   const s = await getSettings();
+  if (!load.done) { load.done = true; setLanguage(s.language); localize(); }
   for (const el of form.querySelectorAll('[name]')) {
     if (el.type === 'checkbox') el.checked = !!s[el.name];
     else el.value = s[el.name];
@@ -17,6 +19,7 @@ form.addEventListener('change', async (e) => {
   if (!el.name) return;
   const value = el.type === 'checkbox' ? el.checked : el.type === 'number' ? Number(el.value) : el.value;
   await setSettings({ [el.name]: value });
+  if (el.name === 'language') return location.reload();
   saved.textContent = 'Saved ✓';
   setTimeout(() => (saved.textContent = ''), 1500);
 });

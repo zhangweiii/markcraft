@@ -1,4 +1,8 @@
 import { getRecent } from './shared/db.js';
+import { getSettings } from './shared/settings.js';
+import { setLanguage, localize } from './shared/i18n.js';
+
+getSettings().then((s) => { setLanguage(s.language); localize(); });
 
 const VIEWER = chrome.runtime.getURL('viewer.html');
 const open = (q) => { chrome.tabs.create({ url: VIEWER + q }); window.close(); };

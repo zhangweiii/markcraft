@@ -1,0 +1,14 @@
+{
+  "name": {
+    "message": "MarkCraft – Markdown 阅读器与编辑器"
+  },
+  "description": {
+    "message": "渲染、编辑、评审和演示 Markdown：GFM、图表、数学公式、目录、带差异提示的实时刷新、所见即所得编辑、标注、导出 Word/HTML/PDF，以及交接给 AI Agent。"
+  },
+  "cmdOpen": {
+    "message": "在 MarkCraft 中打开 Markdown 文件"
+  },
+  "cmdNew": {
+    "message": "新建 Markdown 文档"
+  }
+}

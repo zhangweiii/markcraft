@@ -1,0 +1,14 @@
+{
+  "name": {
+    "message": "MarkCraft – Markdown Viewer & Editor"
+  },
+  "description": {
+    "message": "Render, edit, review and present Markdown: GFM, diagrams, math, TOC, live reload with diffs, WYSIWYG editing, annotations, Word/HTML/PDF export and AI agent hand-off."
+  },
+  "cmdOpen": {
+    "message": "Open a Markdown file in MarkCraft"
+  },
+  "cmdNew": {
+    "message": "New Markdown document"
+  }
+}

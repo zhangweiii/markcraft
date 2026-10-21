@@ -11,6 +11,7 @@ import { sourceFromQuery, sourceFromHandle, NewSource, HandleSource, UrlSource, 
 import * as native from './native.js';
 import { textStats, formatStats, Zoomer, attachZoom } from './extras.js';
 import { setupFolderTools } from './folders.js';
+import { t, setLanguage, localize } from '../shared/i18n.js';
 
 const $ = (sel) => document.querySelector(sel);
 const $$ = (sel) => [...document.querySelectorAll(sel)];
@@ -67,7 +68,7 @@ function modal(html, setup) {
 }
 
 function confirmDiscard() {
-  return !S.dirty || confirm(`“${S.source?.name}” has unsaved changes. Discard them?`);
+  return !S.dirty || confirm(t('“{name}” has unsaved changes. Discard them?', { name: S.source?.name }));
 }
 
 function applyTheme() {
@@ -113,7 +114,7 @@ function renderCtx() {
 async function renderRead({ flashChanges = false } = {}) {
   const before = flashChanges ? [...els.doc.children].map((c) => c.outerHTML) : null;
   const html = renderMarkdown(S.text, S.settings);
-  els.doc.innerHTML = html || '<p class="empty-doc">This document is empty.</p>';
+  els.doc.innerHTML = html || `<p class="empty-doc">${t('This document is empty.')}</p>`;
   await enhance(els.doc, renderCtx());
   if (before) {
     const seen = new Set(before);
@@ -335,7 +336,7 @@ function askPermission(src) {
   return new Promise((resolve) => {
     document.body.classList.remove('loading');
     showWelcome(
-      `<div class="perm-card"><h2>Allow access to “${escapeHtml(src.root ? src.root.name : src.name)}”</h2>
+      `<div class="perm-card"><h2>${escapeHtml(t('Allow access to “{name}”', { name: src.root ? src.root.name : src.name }))}</h2>
       <p>Chrome needs you to confirm access again after a restart.</p>
       <button class="btn primary" id="perm-btn">Allow access</button></div>`,
     );
@@ -350,7 +351,7 @@ function askPermission(src) {
 function showLoadError(src, e) {
   document.body.classList.remove('loading');
   const fileBlocked = src.kind === 'url' && src.isFile;
-  showWelcome(`<div class="perm-card"><h2>Couldn’t open ${escapeHtml(src.name)}</h2>
+  showWelcome(`<div class="perm-card"><h2>${escapeHtml(t('Couldn’t open {name}', { name: src.name }))}</h2>
     <p class="error-text">${escapeHtml(e.message || String(e))}</p>
     ${fileBlocked ? `<p>To read local files, turn on <b>Allow access to file URLs</b> for MarkCraft.</p><button class="btn primary" id="ext-settings">Open extension settings</button>` : ''}
     <p><button class="btn" id="retry-btn">Try again</button></p></div>`);
@@ -517,11 +518,11 @@ async function save({ as = false, quiet = false } = {}) {
       S.mode = mode;
     }
     markDirty();
-    setStatus(`Saved ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`);
-    if (!quiet) toast(`Saved “${S.source.name}”`, 'ok', 1600);
+    setStatus(t('Saved {time}', { time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) }));
+    if (!quiet) toast(t('Saved “{name}”', { name: S.source.name }), 'ok', 1600);
   } catch (e) {
     if (e.name === 'AbortError') return;
-    toast('Save failed: ' + e.message, 'error', 5000);
+    toast(t('Save failed: {e}', { e: e.message }), 'error', 5000);
   }
 }
 
@@ -700,7 +701,7 @@ async function exportWord() {
     const title = S.source.name.replace(MD_EXT, '');
     download(await exportDocx(tmp, { title, mermaidPlain }), title + '.docx');
   } catch (e) {
-    toast('Word export failed: ' + e.message, 'error', 5000);
+    toast(t('Word export failed: {e}', { e: e.message }), 'error', 5000);
   } finally {
     tmp.remove();
   }
@@ -715,7 +716,7 @@ async function startPresentation() {
 async function showMindMap() {
   if (S.mode === 'source') S.text = els.source.value;
   const { openMindMap } = await import('./mindmap.js');
-  openMindMap(S.text, S.source.name).catch((e) => toast('Mind map failed: ' + e.message, 'error'));
+  openMindMap(S.text, S.source.name).catch((e) => toast(t('Mind map failed: {e}', { e: e.message }), 'error'));
 }
 
 async function printDoc() {
@@ -1052,7 +1053,7 @@ const actions = {
   shortcuts: () => shortcutsHelp(),
   settings: () => chrome.runtime.openOptionsPage(),
   handoff: () => handoff(),
-  'clear-comments': () => { if (review.items.length && confirm('Delete all review comments for this document?')) review.clearAll(); },
+  'clear-comments': () => { if (review.items.length && confirm(t('Delete all review comments for this document?'))) review.clearAll(); },
   'ext-accept': () => acceptExternal(),
   'ext-dismiss': () => dismissExternal(),
   'ext-diff': () => showExternalDiff(),
@@ -1153,6 +1154,8 @@ onSettingsChanged(async (settings) => {
 
 async function init() {
   [S.settings, S.layout] = await Promise.all([getSettings(), getLayout()]);
+  setLanguage(S.settings.language);
+  localize();
   applyTheme();
   setupResizers();
   setupDrop();

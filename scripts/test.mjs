@@ -18,8 +18,9 @@ await cp(hostManifest, path.join(profile, 'NativeMessagingHosts/com.markcraft.ho
 const ctx = await chromium.launchPersistentContext(profile, {
   headless: !process.env.HEADED,
   executablePath: process.env.CH,
-  args: [`--disable-extensions-except=${ext}`, `--load-extension=${ext}`],
+  args: [`--disable-extensions-except=${ext}`, `--load-extension=${ext}`, '--lang=en-US'],
   viewport: { width: 1300, height: 900 },
+  locale: 'en-US',
 });
 let failures = 0;
 const check = (name, ok, extra = '') => {
@@ -261,6 +262,18 @@ await p2.goto('file://' + path.join(work, 'llms.txt'));
 await p2.waitForSelector('#doc h1', { timeout: 8000 }).catch(() => {});
 check('.txt rendered as Markdown', (await p2.textContent('#doc h1').catch(() => '')) === 'llms.txt');
 await p2.close();
+
+// Chinese UI
+const p3 = await ctx.newPage();
+await p3.goto('file://' + sample);
+await p3.waitForSelector('#doc h1', { timeout: 8000 });
+await p3.evaluate(() => chrome.storage.sync.get('settings').then(({ settings }) => chrome.storage.sync.set({ settings: { ...settings, language: 'zh-CN' } })));
+await p3.reload();
+await p3.waitForSelector('#doc h1', { timeout: 8000 });
+const zh = await p3.evaluate(() => ({ read: document.querySelector('#mode-switch [data-mode="read"]').textContent, outline: document.querySelector('[data-side="outline"]').textContent, h1: document.querySelector('#doc h1').textContent }));
+check('Chinese UI (content untouched)', zh.read === '阅读' && zh.outline === '大纲' && zh.h1 === 'MarkCraft Sample', JSON.stringify(zh));
+if (process.env.SHOTS) await p3.screenshot({ path: path.join(process.env.SHOTS, 'zh.png') });
+await p3.close();
 
 await page.screenshot({ path: path.join(work, 'screenshot.png') });
 if (process.env.SHOTS) await page.screenshot({ path: path.join(process.env.SHOTS, 'other.png') });

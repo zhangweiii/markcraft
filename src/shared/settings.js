@@ -1,5 +1,6 @@
 // User preferences (synced) and layout state (local).
 export const DEFAULTS = {
+  language: 'auto', // auto | en | zh-CN
   theme: 'auto', // auto | light | dark | sepia
   fontFamily: 'sans', // sans | serif | mono
   fontSize: 16,
