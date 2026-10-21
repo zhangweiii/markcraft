@@ -11,6 +11,7 @@ import DOMPurify from 'dompurify';
 import { DIAGRAM_LANGS, renderDiagrams } from './diagrams.js';
 import { t } from '../shared/i18n.js';
 import { pluginExtensions, extractAbbreviations, applyAbbreviations, parseFrontMatter } from './plugins.js';
+import { preprocessMintlify, enhanceMintlify } from './mintlify.js';
 
 export const FRONT_MATTER = /^---\r?\n([\s\S]*?)\r?\n(?:---|\.\.\.)\r?\n?/;
 const TASK_ITEM = /^(\s*(?:>\s*)*(?:[-*+]|\d+[.)])\s+)\[([ xX])\]/;
@@ -75,6 +76,16 @@ function createMarked(settings) {
   if (p.alerts) exts.push(markedAlert());
   const marked = new Marked(...exts);
   marked.setOptions({ gfm: true, breaks: settings.lineBreaks === 'github' });
+  // ```js app.js → language "js", title "app.js" (shown on the block and used by CodeGroup tabs).
+  marked.use({
+    walkTokens(tok) {
+      if (tok.type !== 'code') return;
+      const [lang, ...rest] = (tok.lang || '').trim().split(/\s+/);
+      const title = rest.join(' ').replace(/^title=["']?|["']$/g, '');
+      marked.codeTitles?.push(title || null);
+      if (rest.length) tok.lang = lang;
+    },
+  });
   if (p.katex) marked.use({ extensions: mathExtensions });
   for (const use of pluginExtensions(p)) marked.use(use);
   // Without the task-list plugin, render "[ ]" items as plain text.
@@ -113,7 +124,10 @@ export function renderMarkdown(text, settings) {
   }
   let abbr = {};
   if (settings.plugins.abbreviation) ({ text, defs: abbr } = extractAbbreviations(text));
+  if (settings.plugins.mintlify) text = preprocessMintlify(text);
+  cached.marked.codeTitles = [];
   const raw = cached.marked.parse(text);
+  const titles = cached.marked.codeTitles;
   let html = DOMPurify.sanitize(raw, {
     ADD_TAGS: ['semantics', 'annotation'],
     ADD_ATTR: ['target', 'checked', 'align', 'encoding', 'rowspan', 'colspan'],
@@ -121,6 +135,7 @@ export function renderMarkdown(text, settings) {
   });
   if (frontMatter && settings.frontMatterCard) html = frontMatterCard(frontMatter) + html;
   if (Object.keys(abbr).length) html = `<template data-abbr="${escapeHtml(JSON.stringify(abbr))}"></template>` + html;
+  if (titles.some(Boolean)) html = `<template data-code-titles="${escapeHtml(JSON.stringify(titles))}"></template>` + html;
   return html;
 }
 
@@ -161,6 +176,12 @@ const COPY_ICON = '<svg viewBox="0 0 16 16" width="14" height="14"><path fill="c
 const ALERT_TITLES = { Note: 'Note', Tip: 'Tip', Important: 'Important', Warning: 'Warning', Caution: 'Caution' };
 
 export async function enhance(root, ctx) {
+  const titleTpl = root.querySelector('template[data-code-titles]');
+  if (titleTpl) {
+    const titles = JSON.parse(titleTpl.dataset.codeTitles);
+    root.querySelectorAll('pre > code').forEach((code, i) => { if (titles[i]) code.dataset.title = titles[i]; });
+    titleTpl.remove();
+  }
   const abbrTpl = root.querySelector('template[data-abbr]');
   if (abbrTpl) {
     applyAbbreviations(root, JSON.parse(abbrTpl.dataset.abbr));
@@ -193,7 +214,7 @@ export async function enhance(root, ctx) {
     const tools = document.createElement('div');
     tools.className = 'code-tools';
     tools.contentEditable = 'false';
-    if (lang) tools.innerHTML = `<span class="code-lang">${escapeHtml(lang)}</span>`;
+    if (code.dataset.title || lang) tools.innerHTML = `<span class="code-lang">${escapeHtml(code.dataset.title || lang)}</span>`;
     const btn = document.createElement('button');
     btn.className = 'code-copy';
     btn.title = t('Copy code');
@@ -261,6 +282,7 @@ export async function enhance(root, ctx) {
   );
 
   await renderDiagrams(root, ctx);
+  if (ctx.settings.plugins.mintlify) enhanceMintlify(root);
 }
 
 export function katexHtml(tex) {

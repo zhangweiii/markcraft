@@ -91,3 +91,38 @@ Apple
 ::: tip Pro tip
 Containers work.
 :::
+
+## Mintlify
+
+<Note>Mintlify callout body.</Note>
+
+<CardGroup cols={2}>
+<Card title="First card" icon="rocket" href="https://example.com">Card body text.</Card>
+<Card title="Second card">Another card.</Card>
+</CardGroup>
+
+<Tabs>
+<Tab title="One">Tab one content.</Tab>
+<Tab title="Two">Tab two content.</Tab>
+</Tabs>
+
+<Steps>
+<Step title="Install">Run the installer.</Step>
+<Step title="Use">Open a file.</Step>
+</Steps>
+
+<Accordion title="Question?">Answer inside accordion.</Accordion>
+
+<CodeGroup>
+```js app.js
+console.log('a')
+```
+```py main.py
+print('b')
+```
+</CodeGroup>
+
+```mermaid
+graph LR
+  X --> Y --> Z((broken
+```

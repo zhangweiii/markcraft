@@ -1,5 +1,5 @@
 import { getRecent, db } from './shared/db.js';
-import { getSettings } from './shared/settings.js';
+import { getSettings, setSettings } from './shared/settings.js';
 import { setLanguage, localize, t } from './shared/i18n.js';
 import { hydrateIcons, icon } from './shared/icons.js';
 
@@ -19,10 +19,17 @@ function render() {
   }
   const groups = [[t('Local Files'), list.filter((r) => r.kind !== 'url' || r.path.startsWith('/'))], [t('External Files'), list.filter((r) => r.kind === 'url' && !r.path.startsWith('/'))]];
   ul.innerHTML = groups.filter(([, g]) => g.length).map(([title, g]) => `<li class="group">${title}</li>` + g.slice(0, 20).map((r) =>
-    `<li><a href="#" data-q="${esc(r.query)}" title="${t('Click to open, Shift+Click for a background tab')}">${icon(r.kind === 'url' && !r.path.startsWith('/') ? 'globe' : 'file', 16)}<span class="txt"><b>${esc(r.name)}</b><span>${esc(r.path)}</span></span><button class="rm" data-key="${esc(r.key)}" title="${t('Remove from list')}">×</button></a></li>`).join('')).join('');
+    `<li><a href="#" data-q="${esc(r.query)}" title="${t('Click to open, Shift+Click for a background tab')}">${icon(r.kind === 'url' && !r.path.startsWith('/') ? 'globe' : 'file', 16)}<span class="txt"><b>${esc(r.name)}</b><span>${esc(r.path)}</span></span><button class="cp" data-copy="${esc(r.path)}" title="${t('Copy URL')}">${icon('copy', 14)}</button><button class="rm" data-key="${esc(r.key)}" title="${t('Remove from list')}">×</button></a></li>`).join('')).join('');
 }
 
 document.getElementById('recent').addEventListener('click', async (e) => {
+  const cp = e.target.closest('.cp');
+  if (cp) {
+    e.preventDefault();
+    await navigator.clipboard.writeText(cp.dataset.copy);
+    cp.innerHTML = icon('check', 14);
+    return;
+  }
   const rm = e.target.closest('.rm');
   if (rm) {
     e.preventDefault();
@@ -60,6 +67,9 @@ getSettings().then(async (s) => {
   const dark = s.theme === 'dark' || (s.theme === 'auto' && matchMedia('(prefers-color-scheme: dark)').matches);
   document.documentElement.dataset.theme = s.theme === 'sepia' ? 'sepia' : dark ? 'dark' : 'light';
   setLanguage(s.language);
+  const en = document.getElementById('enabled');
+  en.checked = s.enabled;
+  en.addEventListener('change', () => setSettings({ enabled: en.checked }));
   hydrateIcons();
   localize();
   items = await getRecent();

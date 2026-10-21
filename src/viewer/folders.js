@@ -93,6 +93,20 @@ export function setupFolderTools({ explorer, openAt, toast, showFiles }) {
 
   let controller;
   let timer;
+  const opts = { caseSensitive: false, wholeWord: false, regex: false };
+  document.getElementById('fx-search-box').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-fs]');
+    if (!b) return;
+    if (b.dataset.fs === 'close') {
+      controller?.abort();
+      input.value = '';
+      document.getElementById('fx-search-box').hidden = true;
+      return runSearch();
+    }
+    opts[b.dataset.fs] = !opts[b.dataset.fs];
+    b.classList.toggle('on', opts[b.dataset.fs]);
+    runSearch();
+  });
   async function runSearch() {
     controller?.abort();
     const q = input.value.trim();
@@ -105,7 +119,8 @@ export function setupFolderTools({ explorer, openAt, toast, showFiles }) {
     const signal = controller.signal;
     results.hidden = false;
     $('#explorer').hidden = true;
-    results.innerHTML = '<div class="fx-searching">Searching…</div>';
+    results.innerHTML = `<div class="fx-searching">${t('Searching...')} <button class="link" data-cancel>${t('Cancel')}</button></div>`;
+    results.querySelector('[data-cancel]').onclick = () => controller.abort();
     let hits = 0;
     const mark = (line, at, len) => {
       const start = Math.max(0, at - 30);
@@ -122,14 +137,15 @@ export function setupFolderTools({ explorer, openAt, toast, showFiles }) {
       div.innerHTML = `<a class="sr-name" href="${file.href}" title="${escapeHtml(file.path)}">${escapeHtml(file.path)}<span class="sr-count">${count || ''}</span></a>` +
         matches.map((m) => `<a class="sr-line" href="${file.href}"><span class="ln">${m.line}</span>${mark(m.text, m.at, m.len)}</a>`).join('');
       results.append(div);
-    }, signal);
+    }, signal, { ...opts, onProgress: (n) => { const el = results.querySelector('.fx-searching'); if (el && !hits) el.firstChild.textContent = t('Searching... {n} files', { n }) + ' '; } });
     } catch (e) {
       results.innerHTML = `<div class="empty-hint">${escapeHtml(e.message)}</div>`;
       return;
     }
-    if (signal.aborted) return;
+    if (signal.aborted && !hits) return;
     if (!hits) results.innerHTML = `<div class="empty-hint">${t('No matches in {n} files', { n: scanned })}</div>`;
     else results.insertAdjacentHTML('afterbegin', `<div class="fx-searching">${t('{n} files · {m} searched', { n: hits, m: scanned })}</div>`);
+    if (signal.aborted) results.insertAdjacentHTML('afterbegin', `<div class="fx-info">${t('Scan stopped - showing partial results')}</div>`);
   }
 
   input.addEventListener('input', () => {

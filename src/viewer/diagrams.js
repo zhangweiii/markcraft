@@ -1,5 +1,6 @@
 // Diagram code blocks → SVG. Each renderer is loaded on first use.
 import { escapeHtml } from './render.js';
+import { t } from '../shared/i18n.js';
 
 export const DIAGRAM_LANGS = {
   mermaid: 'mermaid',
@@ -78,6 +79,15 @@ async function plantuml(source, dark, settings) {
   return res.text();
 }
 
+function reason(e) {
+  const msg = String(e.message || e).split('\n')[0];
+  if (e.notice) return msg;
+  if (e.name === 'TypeError' && /fetch/i.test(msg)) return 'Network error - could not reach the diagram server';
+  if (/timeout/i.test(msg)) return 'The diagram server did not respond in time';
+  if (/HTTP 5\d\d/.test(msg)) return 'Diagram server error';
+  return `Diagram source error — ${msg}`;
+}
+
 const RENDERERS = { mermaid, graphviz, wavedrom, plantuml };
 
 export const mermaidPlain = (source) => mermaid(source, false, null, true);
@@ -101,7 +111,18 @@ export async function renderDiagrams(root, { dark, settings }) {
       fig.innerHTML = svg.replace(/<script[\s\S]*?<\/script>/gi, '').replace(/\son\w+="[^"]*"/gi, '');
     } catch (e) {
       fig.classList.add('diagram-error');
-      fig.innerHTML = `<div class="diagram-error-msg${e.notice ? ' notice-msg' : ''}">${escapeHtml(kind)}: ${escapeHtml(String(e.message || e).split('\n')[0])}${e.consent ? ' <button class="btn small" data-act="plantuml-consent">Enable rendering</button>' : ''}</div><pre>${escapeHtml(source)}</pre>`;
+      fig.innerHTML = `<div class="diagram-error-msg${e.notice ? ' notice-msg' : ''}"><span>${escapeHtml(kind)}: ${escapeHtml(t(reason(e)))}</span>
+        ${e.consent ? `<button class="btn small" data-act="plantuml-consent">${t('Enable rendering')}</button>` : `<button class="btn small" data-diag="retry">${t('Retry')}</button>`}
+        <button class="btn small ghost" data-diag="source">${t('Show source')}</button></div><pre ${e.notice ? '' : 'hidden'}>${escapeHtml(source)}</pre>`;
+      fig.querySelector('[data-diag="source"]').addEventListener('click', () => { const pre = fig.querySelector('pre'); pre.hidden = !pre.hidden; });
+      fig.querySelector('[data-diag="retry"]')?.addEventListener('click', async () => {
+        const pending = document.createElement('pre');
+        pending.className = 'diagram-pending';
+        pending.dataset.kind = kind;
+        pending.dataset.source = source;
+        fig.replaceWith(pending);
+        await renderDiagrams(pending.parentElement, { dark, settings });
+      });
     }
     pre.replaceWith(fig);
   }

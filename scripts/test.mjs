@@ -72,6 +72,17 @@ const info = await page.evaluate(() => ({
     dl: !!document.querySelector('#doc dl dt'), container: document.querySelector('#doc .container-tip .container-title')?.textContent,
     fm: !!document.querySelector('#doc .fm-card table'),
   },
+  mint: {
+    callout: !!document.querySelector('#doc .mint-note.mint-callout .mint-callout-body'),
+    cards: document.querySelectorAll('#doc .mint-cardgroup .mint-card').length,
+    cardLink: !!document.querySelector('#doc a.mint-card[href="https://example.com"]'),
+    tabs: [...document.querySelectorAll('#doc .mint-tabs .mint-tabbar button')].map((b) => b.textContent).join(','),
+    tabHidden: document.querySelectorAll('#doc .mint-tabs > .mint-tab[hidden]').length,
+    steps: document.querySelectorAll('#doc .mint-steps .mint-step-title').length,
+    accordion: document.querySelector('#doc details.mint-accordion summary')?.textContent,
+    codegroup: [...document.querySelectorAll('#doc .mint-codegroup .mint-tabbar button')].map((b) => b.textContent).join(','),
+  },
+  diagErrTools: !!document.querySelector('#doc .diagram-error [data-diag="retry"]') && !!document.querySelector('#doc .diagram-error pre[hidden]'),
   files: [...document.querySelectorAll('#explorer .fx-row')].map((e) => e.textContent),
   title: document.title,
 }));
@@ -88,6 +99,8 @@ check('local image loads', info.img === 'blob:' && info.imgLoaded > 0, `${info.i
 check('relative .md link → viewer', info.link?.includes('viewer.html?file='), info.link);
 check('plugins: sub/sup/mark/ins/emoji/abbr/deflist/container', info.plugins.sub === '2' && info.plugins.mark === 'marked' && info.plugins.ins === 'inserted' && info.plugins.emoji && info.plugins.abbr === 'Hyper Text Markup Language' && info.plugins.dl && info.plugins.container === 'Pro tip', JSON.stringify(info.plugins));
 check('front matter metadata card', info.plugins.fm);
+check('Mintlify components', info.mint.callout && info.mint.cards === 2 && info.mint.cardLink && info.mint.tabs === 'One,Two' && info.mint.tabHidden === 1 && info.mint.steps === 2 && info.mint.accordion === 'Question?' && info.mint.codegroup === 'app.js,main.py', JSON.stringify(info.mint));
+check('diagram error has Retry / Show source', info.diagErrTools);
 check('Graphviz diagram', info.graphviz, info.diagErr);
 check('WaveDrom diagram', info.wavedrom, info.diagErr);
 check('PlantUML is opt-in (off by default)', info.plantumlNotice);
@@ -116,6 +129,27 @@ check('bookmark list shows folder', (await page.locator('#bookmarks .bm-row').co
 await page.click('[data-act="bookmarks"]');
 await page.click('#dock [data-act="toggle-sidebar"]');
 
+// Diagram download dialog
+await page.hover('#doc .graphviz-diagram');
+await page.click('#doc .graphviz-diagram .diagram-dl');
+check('diagram download dialog', await page.isVisible('.dl-modal'));
+const dlP = page.waitForEvent('download', { timeout: 8000 }).catch(() => null);
+await page.click('.dl-modal [data-g="f"] [data-v="png"]');
+await page.click('.dl-modal [data-go]');
+const dlFile = await dlP;
+check('diagram downloads as PNG', dlFile?.suggestedFilename() === 'graphviz.png', dlFile?.suggestedFilename());
+
+// Sidebar grouping
+await page.click('#dock [data-act="toggle-sidebar"]');
+await page.click('[data-act="fx-sort"]');
+await page.click('#fx-sort-menu [data-group="type"]');
+await page.waitForSelector('#explorer .fx-group', { timeout: 4000 }).catch(() => {});
+const groups = await page.$$eval('#explorer .fx-group', (g) => g.map((x) => x.textContent));
+check('sidebar groups by type', groups.some((g) => g.startsWith('Markdown')) && groups.some((g) => g.startsWith('.txt')), groups.join(' | '));
+await page.click('#fx-sort-menu [data-group="none"]').catch(async () => { await page.click('[data-act="fx-sort"]'); await page.click('#fx-sort-menu [data-group="none"]'); });
+await page.keyboard.press('Escape');
+await page.click('#dock [data-act="toggle-sidebar"]');
+
 // Lightbox
 await page.click('#doc img.zoomable');
 check('image lightbox opens', await page.isVisible('.zoomer'));
@@ -129,6 +163,9 @@ await page.keyboard.press('Escape');
 // Word export
 const dl = page.waitForEvent('download', { timeout: 20000 }).catch(() => null);
 await page.evaluate(() => document.querySelector('#actions-menu [data-act="export-docx"]').click());
+await page.waitForSelector('#modal[open] .warn-list', { timeout: 3000 }).catch(() => {});
+check('export warnings dialog (broken diagram)', (await page.textContent('#modal').catch(() => '')).includes('diagram'));
+await page.click('#modal button[value="go"]').catch(() => {});
 const download = await dl;
 if (download) {
   const file = path.join(work, 'out.docx');
@@ -151,6 +188,9 @@ await page.keyboard.press('Escape');
 
 // Presentation
 await page.evaluate(() => document.querySelector('#actions-menu [data-act="present"]').click());
+await page.waitForSelector('#modal[open] .warn-list', { timeout: 3000 }).catch(() => {});
+check('presentation warnings dialog', await page.isVisible('#modal .warn-list'));
+await page.click('#modal button[value="go"]').catch(() => {});
 await page.waitForSelector('.present .slide h1, .present .slide h2', { timeout: 5000 }).catch(() => {});
 const count1 = await page.textContent('.present-count');
 await page.keyboard.press('ArrowRight');

@@ -1,5 +1,7 @@
 // Reading aids: statistics, progress, image lightbox, zoomable diagrams.
 import { t } from '../shared/i18n.js';
+import { icon } from '../shared/icons.js';
+import { svgToBlob, svgElementText } from './svgimage.js';
 
 const CJK = /[぀-ヿ㐀-䶿一-鿿豈-﫿가-힯]/g;
 
@@ -152,15 +154,10 @@ export class Zoomer {
 
   download() {
     const item = this.items[this.index];
+    if (item.kind !== 'img') return downloadDiagram(item.fig || item.node.parentElement);
     const a = document.createElement('a');
-    if (item.kind === 'img') {
-      a.href = item.src;
-      a.download = item.src.split('/').pop().split('?')[0] || 'image';
-    } else {
-      const svg = new XMLSerializer().serializeToString(item.node);
-      a.href = URL.createObjectURL(new Blob([svg], { type: 'image/svg+xml' }));
-      a.download = (item.name || 'diagram') + '.svg';
-    }
+    a.href = item.src;
+    a.download = item.src.split('/').pop().split('?')[0] || 'image';
     a.click();
   }
 }
@@ -174,14 +171,56 @@ export function attachZoom(root, zoomer) {
     img.addEventListener('click', () => zoomer.open(imgs.map((x) => ({ kind: 'img', src: x.currentSrc || x.src, caption: x.alt || x.title })), i));
   });
   for (const fig of root.querySelectorAll('.diagram')) {
-    const svg = fig.querySelector('svg');
-    if (!svg || fig.querySelector('.diagram-zoom')) continue;
-    const btn = document.createElement('button');
-    btn.className = 'diagram-zoom';
-    btn.title = 'Fullscreen (zoom & pan)';
-    btn.textContent = '⤢';
-    btn.addEventListener('click', () => zoomer.open([{ kind: 'svg', node: svg, caption: fig.dataset.kind, name: fig.dataset.kind }]));
-    fig.append(btn);
-    fig.addEventListener('dblclick', () => btn.click());
+    const svg = fig.querySelector(':scope > svg');
+    if (!svg || fig.querySelector('.diagram-tools')) continue;
+    const tools = document.createElement('div');
+    tools.className = 'diagram-tools';
+    tools.setAttribute('data-noindex', '');
+    tools.innerHTML = `<button class="diagram-zoom" title="${t('Fullscreen (zoom & pan)')}">${icon('fullscreen', 15)}</button><button class="diagram-dl" title="${t('Download')}">${icon('download', 15)}</button>`;
+    tools.querySelector('.diagram-zoom').addEventListener('click', () => zoomer.open([{ kind: 'svg', node: svg, caption: fig.dataset.kind, name: fig.dataset.kind, fig }]));
+    tools.querySelector('.diagram-dl').addEventListener('click', () => downloadDiagram(fig));
+    fig.append(tools);
+    fig.addEventListener('dblclick', () => tools.querySelector('.diagram-zoom').click());
   }
+}
+
+// Download a rendered diagram as SVG, PNG or JPEG at a chosen scale.
+export function downloadDiagram(fig) {
+  const svg = fig.querySelector(':scope > svg');
+  if (!svg) return;
+  const kind = fig.dataset.kind || 'diagram';
+  const box = document.createElement('div');
+  box.className = 'dl-modal';
+  box.innerHTML = `<div class="dl-card"><h3>${t('Download Diagram')}</h3><p class="hint">${t('Export as PNG, SVG, or JPEG')}</p>
+    <div class="dl-row"><b>${t('Format')}</b><span class="segment" data-g="f"><button data-v="svg" class="on">SVG</button><button data-v="png">PNG</button><button data-v="jpeg">JPEG</button></span></div>
+    <div class="dl-row"><b>${t('Scale')}</b><span class="segment" data-g="s"><button data-v="1">1×</button><button data-v="2" class="on">2×</button><button data-v="3">3×</button><button data-v="4">4×</button></span></div>
+    <p class="hint">${t('PNG/JPEG quality depends on scale. Use SVG for lossless vector output.')}</p>
+    <div class="row"><span class="spacer"></span><button class="btn" data-x>${t('Cancel')}</button><button class="btn primary" data-go>${t('Download')}</button></div></div>`;
+  document.body.append(box);
+  const close = () => box.remove();
+  box.addEventListener('click', async (e) => {
+    if (e.target === box || e.target.closest('[data-x]')) return close();
+    const seg = e.target.closest('.segment button');
+    if (seg) return seg.parentElement.querySelectorAll('button').forEach((b) => b.classList.toggle('on', b === seg));
+    if (!e.target.closest('[data-go]')) return;
+    const fmt = box.querySelector('[data-g="f"] .on').dataset.v;
+    const scale = +box.querySelector('[data-g="s"] .on').dataset.v;
+    close();
+    let { text } = svgElementText(svg);
+    let blob;
+    if (fmt === 'svg') blob = new Blob([text], { type: 'image/svg+xml' });
+    else {
+      // HTML labels (foreignObject) can't be rasterized; re-render Mermaid with SVG text labels.
+      if (kind === 'mermaid' && svg.querySelector('foreignObject')) {
+        const { mermaidPlain } = await import('./diagrams.js');
+        text = await mermaidPlain(fig.dataset.source);
+      }
+      blob = await svgToBlob(text, `image/${fmt}`, scale, fmt === 'jpeg' ? '#ffffff' : null);
+    }
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = `${kind}.${fmt === 'jpeg' ? 'jpg' : fmt}`;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+  });
 }

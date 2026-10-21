@@ -27,7 +27,7 @@ export class Explorer {
     this.titleEl = titleEl;
     this.upBtn = upBtn;
     this.onOpen = onOpen;
-    this.opts = { sort: 'name', desc: false, foldersFirst: true, showTxt: true, exclude: [] };
+    this.opts = { sort: 'name', desc: false, foldersFirst: true, showTxt: true, exclude: [], group: 'none' };
     this.filter = '';
     this.expanded = new Set(JSON.parse(sessionStorage.getItem('mc-expanded') || '[]'));
     el.addEventListener('click', (e) => {
@@ -100,6 +100,7 @@ export class Explorer {
     this.el.append(list);
     try {
       if (this.filter) await this.renderFiltered(list);
+      else if (this.opts.group !== 'none') await this.renderGrouped(list);
       else await this.fill(list, this.rootNode(), 0);
     } catch (e) {
       this.el.innerHTML = `<div class="empty-hint">${t('Failed to scan directory:')} ${escapeHtml(e.message)}</div>`;
@@ -129,14 +130,50 @@ export class Explorer {
     if (!n) container.innerHTML = `<div class="empty-hint">${t('No documents match your search')}</div>`;
   }
 
-  async list(node) {
+  // Flat list of every file, grouped by type or by modification date.
+  async renderGrouped(container) {
+    const token = (this.filterToken = {});
+    const files = [];
+    for await (const f of this.walk(null, 0, true)) {
+      if (token !== this.filterToken) return;
+      files.push(f);
+      if (files.length >= 3000) break;
+    }
+    const day = 86400000;
+    const startOfToday = new Date().setHours(0, 0, 0, 0);
+    const bucket = (f) => {
+      if (this.opts.group === 'type') return /\.txt$/i.test(f.name) ? '.txt' : /\.mdx$/i.test(f.name) ? 'MDX' : 'Markdown';
+      const m = f.mtime || 0;
+      if (m >= startOfToday) return t('Today');
+      if (m >= startOfToday - day) return t('Yesterday');
+      if (m >= startOfToday - 7 * day) return t('This week');
+      if (m >= startOfToday - 30 * day) return t('This month');
+      return t('Older');
+    };
+    const order = this.opts.group === 'type' ? ['Markdown', 'MDX', '.txt'] : [t('Today'), t('Yesterday'), t('This week'), t('This month'), t('Older')];
+    const groups = new Map(order.map((k) => [k, []]));
+    for (const f of files) groups.get(bucket(f))?.push(f);
+    for (const [name, list] of groups) {
+      if (!list.length) continue;
+      if (this.opts.group === 'modified') list.sort((a, b) => (b.mtime || 0) - (a.mtime || 0));
+      const head = document.createElement('div');
+      head.className = 'fx-group';
+      head.textContent = `${name} · ${list.length}`;
+      container.append(head);
+      for (const f of list) container.append(this.row(f, 0, true));
+    }
+    if (!files.length) container.innerHTML = `<div class="empty-hint">${t('No markdown files found in this directory.')}</div>`;
+    if (files.length >= 3000) container.insertAdjacentHTML('afterbegin', `<div class="fx-info">${t('Scan stopped after finding {n} items. This folder is very large - consider opening a subfolder.', { n: files.length })}</div>`);
+  }
+
+  async list(node, withMeta = false) {
     let entries = [];
     if (node.url) {
       const html = await (await fetch(node.url, { cache: 'no-store' })).text();
       entries = parseListing(html, node.url);
     } else {
       for await (const [name, handle] of node.handle.entries()) entries.push({ name, kind: handle.kind === 'directory' ? 'dir' : 'file', handle });
-      if (this.opts.sort !== 'name') {
+      if (this.opts.sort !== 'name' || withMeta) {
         await Promise.all(entries.filter((e) => e.kind === 'file').map(async (e) => {
           const f = await e.handle.getFile().catch(() => null);
           if (f) { e.size = f.size; e.mtime = f.lastModified; }
@@ -172,6 +209,7 @@ export class Explorer {
   async fill(container, node, depth) {
     const items = await this.list(node);
     if (!items.length && depth === 0) container.innerHTML = `<div class="empty-hint">${t('No markdown files found in this directory.')}</div>`;
+    if (depth === 0 && items.length > 500) container.insertAdjacentHTML('beforebegin', `<div class="fx-info">${t('This folder contains {n} items. For best performance, consider opening a subfolder.', { n: items.length })}</div>`);
     for (const child of items) {
       const row = this.row(child, depth);
       container.append(row);
@@ -224,13 +262,13 @@ export class Explorer {
   }
 
   // Depth-first walk of every Markdown file under the root.
-  async *walk(node = null, depth = 0) {
+  async *walk(node = null, depth = 0, withMeta = false) {
     node ||= this.rootNode();
     if (depth > 12) return;
     let items;
-    try { items = await this.list(node); } catch { return; }
+    try { items = await this.list(node, withMeta); } catch { return; }
     for (const child of items) {
-      if (child.kind === 'dir') yield* this.walk(child, depth + 1);
+      if (child.kind === 'dir') yield* this.walk(child, depth + 1, withMeta);
       else yield child;
     }
   }
@@ -241,13 +279,14 @@ export class Explorer {
   }
 
   // Full-text search; calls onHit(file, matches, count) as results arrive.
-  async search(query, onHit, signal, { caseSensitive = false, wholeWord = false, regex = false } = {}) {
+  async search(query, onHit, signal, { caseSensitive = false, wholeWord = false, regex = false, onProgress } = {}) {
     let re;
     const src = regex ? query : query.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
     try { re = new RegExp(wholeWord ? `\\b(?:${src})\\b` : src, caseSensitive ? 'g' : 'gi'); } catch (e) { throw new Error(t('Invalid regex pattern: {0}', { 0: query })); }
     let files = 0;
     for await (const file of this.walk()) {
       if (signal.aborted || files++ > 3000) break;
+      onProgress?.(files);
       const text = await this.readFile(file).catch(() => '');
       re.lastIndex = 0;
       const count = (text.match(re) || []).length;

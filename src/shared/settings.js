@@ -19,10 +19,13 @@ export const PLUGIN_DEFAULTS = {
   frontMatter: true, // strip YAML front matter from the body
   tables: true, // multiline cells, rowspan/colspan, headerless tables
   typographer: false,
+  mintlify: true, // <Card>, <Tabs>, <Steps>, <Accordion>, callouts…
 };
 
 export const DEFAULTS = {
   // General
+  enabled: true, // master switch for taking over .md pages
+  whatsNew: true,
   language: 'auto', // auto | en | zh-CN
   theme: 'auto', // auto | light | dark | sepia
   defaultMode: 'read', // read | edit | source
@@ -108,6 +111,7 @@ export const LAYOUT_DEFAULTS = {
   fxSortDesc: false,
   fxFoldersFirst: true,
   fxShowTxt: true,
+  fxGroup: 'none', // none | type | modified
 };
 
 function merge(saved = {}) {

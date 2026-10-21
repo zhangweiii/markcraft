@@ -35,7 +35,7 @@ const PLUGINS = [
   ['Core Rendering', [['taskLists', 'Task Lists', 'Render GitHub-style task lists with checkboxes'], ['tables', 'Advanced Tables', 'Extended table features: multiline cells, rowspan/colspan, headerless tables'], ['frontMatter', 'Front Matter', 'Strip YAML front matter (---) blocks instead of rendering them as text']]],
   ['Text Formatting', [['mark', 'Highlight', 'Render highlighted text with ==text== syntax'], ['insertion', 'Insertion', 'Render insertion with ++text++ syntax'], ['subscript', 'Subscript', 'Render subscript with ~text~ syntax (e.g., H~2~O)'], ['superscript', 'Superscript', 'Render superscript with ^text^ syntax (e.g., x^2^)'], ['typographer', 'Typographer', 'Auto-convert typography: (c) → ©, -- → –, --- → —, and smart quotes'], ['emoji', 'Emoji', 'Convert emoji shortcodes like :smile: to unicode emoji']]],
   ['Extended Syntax', [['footnote', 'Footnotes', 'Add footnotes with [^1] syntax'], ['deflist', 'Definition Lists', 'Support for definition lists (Term / : definition)'], ['abbreviation', 'Abbreviations', 'Define abbreviations with *[abbr]: definition syntax'], ['container', 'Custom Containers', 'Create custom block containers with ::: syntax'], ['alerts', 'GitHub Alerts', 'Render [!NOTE], [!TIP], [!IMPORTANT], [!WARNING], [!CAUTION] blocks']]],
-  ['Advanced Features', [['katex', 'Math Equations', 'Render LaTeX math equations ($...$ inline, $$...$$ display)'], ['mermaid', 'Mermaid Diagrams', 'Render flowcharts, sequence diagrams, class diagrams, and more'], ['graphviz', 'Graphviz Diagrams', 'Render DOT-language graphs locally via WebAssembly'], ['wavedrom', 'WaveDrom Diagrams', 'Render WaveJSON timing diagrams locally'], ['plantuml', 'PlantUML Diagrams', 'Render PlantUML diagrams via a diagram server (consent required)']]],
+  ['Advanced Features', [['katex', 'Math Equations', 'Render LaTeX math equations ($...$ inline, $$...$$ display)'], ['mermaid', 'Mermaid Diagrams', 'Render flowcharts, sequence diagrams, class diagrams, and more'], ['graphviz', 'Graphviz Diagrams', 'Render DOT-language graphs locally via WebAssembly'], ['wavedrom', 'WaveDrom Diagrams', 'Render WaveJSON timing diagrams locally'], ['plantuml', 'PlantUML Diagrams', 'Render PlantUML diagrams via a diagram server (consent required)'], ['mintlify', 'Mintlify Components', 'Render Mintlify MDX components: Card, CardGroup, Tabs, Steps, Accordion, CodeGroup, callouts']]],
 ];
 
 // Field: [key, type, label, description, extra]
@@ -44,6 +44,7 @@ const SECTIONS = [
     id: 'general', icon: 'sliders', title: 'General',
     groups: [
       ['', [
+        ['enabled', 'toggle', 'Extension Enabled', 'Render Markdown files automatically when you open them'],
         ['language', 'select', 'Language', "Language of MarkCraft's interface", { options: { auto: 'Automatic (browser)', en: 'English', 'zh-CN': '简体中文' }, reload: true }],
         ['theme', 'segment', 'Theme', '', { options: { auto: 'Auto', light: 'Light', dark: 'Dark', sepia: 'Sepia' } }],
         ['defaultMode', 'segment', 'Open documents in', '', { options: { read: 'Read', edit: 'Edit', source: 'Source' } }],
@@ -57,10 +58,10 @@ const SECTIONS = [
         ['excludeFoldersOn', 'toggle', 'Exclude Folders', 'Skip specified folders during scanning to improve performance'],
         ['excludeFolders', 'list', '', '', { dep: 'excludeFoldersOn', placeholder: 'Add folder name...' }],
       ]],
-      ['Updates', [['celebration', 'toggle', 'Celebration animation', 'Show confetti animation when you reach the end of a document']]],
+      ['Updates', [['whatsNew', 'toggle', "What's New Notification", 'Show a one-time summary of new features and fixes when MarkCraft updates'], ['celebration', 'toggle', 'Celebration animation', 'Show confetti animation when you reach the end of a document']]],
       ['Agent', [['agentCli', 'segment', 'Default agent', 'Used by Ask Agent (needs the native helper)', { options: { claude: 'Claude Code', codex: 'Codex' } }]]],
     ],
-    reset: ['language', 'theme', 'defaultMode', 'autoRefresh', 'pollInterval', 'autoAccept', 'renderTxt', 'interceptHttp', 'excludeFoldersOn', 'excludeFolders', 'celebration', 'agentCli'],
+    reset: ['enabled', 'whatsNew', 'language', 'theme', 'defaultMode', 'autoRefresh', 'pollInterval', 'autoAccept', 'renderTxt', 'interceptHttp', 'excludeFoldersOn', 'excludeFolders', 'celebration', 'agentCli'],
   },
   {
     id: 'appearance', icon: 'palette', title: 'Appearance',

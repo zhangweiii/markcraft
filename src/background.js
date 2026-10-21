@@ -4,7 +4,8 @@ function openViewer(query = '') {
   return chrome.tabs.create({ url: VIEWER + query });
 }
 
-chrome.runtime.onInstalled.addListener(() => {
+chrome.runtime.onInstalled.addListener(({ reason }) => {
+  if (reason === 'update') chrome.storage.local.set({ pendingWhatsNew: true });
   chrome.contextMenus.create({ id: 'open-link', title: 'Open link in MarkCraft', contexts: ['link'] });
   chrome.contextMenus.create({ id: 'open-page', title: 'Render this page as Markdown', contexts: ['page'] });
   chrome.contextMenus.create({ id: 'new-from-selection', title: 'New Markdown document from selection', contexts: ['selection'] });

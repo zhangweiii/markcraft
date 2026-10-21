@@ -466,7 +466,7 @@ svg.zoomer-content { background: var(--bg); border-radius: 10px; }
 @media print {
   body { overflow: visible; background: #fff; }
   #app { display: block; height: auto; }
-  #sidebar, #panel, #banner, #findbar, #toasts, #statusbar, #progress, #dock, #actions-menu, #editbar, .diagram-zoom, .zoomer, .fullview, .present, .sel-toolbar, .popover, #editor, #source, #welcome, .code-tools { display: none !important; }
+  #sidebar, #panel, #banner, #findbar, #toasts, #statusbar, #progress, #dock, #actions-menu, #editbar, .diagram-zoom, .diagram-tools, .zoomer, .fullview, .present, .sel-toolbar, .popover, #editor, #source, #welcome, .code-tools { display: none !important; }
   #content, #scroller { display: block; overflow: visible; height: auto; }
   #doc { padding: 0; max-width: none; }
   .markdown-body pre, .markdown-body pre code { white-space: pre-wrap; }
@@ -480,3 +480,25 @@ svg.zoomer-content { background: var(--bg); border-radius: 10px; }
   .side.left { position: absolute; left: 0; top: 0; bottom: 0; z-index: 35; box-shadow: var(--shadow-lg); }
   body.panel-open #dock, body.panel-open .actions-grid { --dock-right: 0px; }
 }
+
+/* diagram tools + download dialog */
+.markdown-body .diagram .diagram-tools { position: absolute; top: 6px; right: 6px; display: flex; gap: 4px; opacity: 0; transition: opacity .15s; }
+.markdown-body .diagram:hover .diagram-tools { opacity: 1; }
+.markdown-body .diagram .diagram-tools button { position: static; opacity: 1; width: 30px; height: 30px; display: flex; align-items: center; justify-content: center; border: 1px solid var(--border); border-radius: 8px; background: var(--bg); color: var(--muted); cursor: pointer; }
+.markdown-body .diagram .diagram-tools button:hover { color: var(--fg); }
+.markdown-body .diagram-error-msg { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.markdown-body .diagram-error-msg > span { flex: 1; min-width: 200px; }
+.dl-modal { position: fixed; inset: 0; z-index: 350; display: flex; align-items: center; justify-content: center; background: rgba(10, 10, 20, .4); }
+.dl-card { width: 360px; padding: 20px 22px; border-radius: 16px; background: var(--ui-raised); color: var(--ui-fg); border: 1px solid var(--ui-border); box-shadow: var(--shadow-lg); display: flex; flex-direction: column; gap: 10px; }
+.dl-card h3 { margin: 0; }
+.dl-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+@media print { .diagram-tools, .dl-modal { display: none !important; } }
+.whatsnew h4 { margin: 12px 0 4px; font-size: 13px; color: var(--accent); }
+.whatsnew ul { margin: 0; padding-left: 20px; line-height: 1.6; }
+.whatsnew details { margin-top: 12px; color: var(--ui-muted); }
+.warn-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.warn-list li { display: flex; gap: 8px; align-items: flex-start; padding: 9px 12px; border-radius: 10px; background: rgba(245, 165, 36, 0.09); border: 1px solid rgba(245, 165, 36, 0.25); }
+.warn-list .ic { color: var(--warn); margin-top: 2px; }
+.fx-group { margin: 10px 8px 4px; font-size: 10.5px; font-weight: 650; letter-spacing: .06em; text-transform: uppercase; color: var(--ui-faint); }
+.fx-info { margin: 0 10px 8px; padding: 8px 10px; border-radius: 9px; font-size: 12px; color: var(--ui-muted); background: rgba(245, 165, 36, .09); border: 1px solid rgba(245, 165, 36, .25); }
+#fx-search-box { padding-right: 4px; }

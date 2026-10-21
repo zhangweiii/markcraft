@@ -2,7 +2,7 @@ import { getSettings, setSettings, getLayout, saveLayout, onSettingsChanged, SHO
 import { icon, hydrateIcons } from '../shared/icons.js';
 import { mountSettings, comboFromEvent, comboLabel } from '../shared/settings-ui.js';
 import { addRecent, getRecent, storeHandle, db } from '../shared/db.js';
-import { renderMarkdown, enhance, taskPositions, escapeHtml } from './render.js';
+import { renderMarkdown, enhance, taskPositions, escapeHtml, FRONT_MATTER as FRONT_MATTER_RE } from './render.js';
 import { Outline } from './toc.js';
 import { FindBar } from './find.js';
 import { Explorer } from './explorer.js';
@@ -663,7 +663,8 @@ async function readModeHtml({ portable = false } = {}) {
     root.remove();
   }
   const clone = root.cloneNode(true);
-  clone.querySelectorAll('.code-tools,.line-numbers,.diagram-zoom').forEach((n) => n.remove());
+  clone.querySelectorAll('.code-tools,.line-numbers,.diagram-zoom,.diagram-tools,.mint-tabbar').forEach((n) => n.remove());
+  clone.querySelectorAll('[hidden]').forEach((n) => n.removeAttribute('hidden'));
   review.applyTo(clone);
   clone.querySelectorAll('.changed-flash,.flash,.zoomable').forEach((n) => n.classList.remove('changed-flash', 'flash', 'zoomable'));
   if (S.settings.tocInExport) clone.prepend(exportToc(clone));
@@ -685,6 +686,7 @@ function exportToc(root) {
 }
 
 async function exportHtml() {
+  if (!(await exportWarnings('html'))) return;
   const body = await readModeHtml({ portable: true });
   const css = await (await fetch('content-style.css')).text();
   const title = S.source.name.replace(MD_EXT, '');
@@ -723,6 +725,7 @@ async function copyRich() {
 }
 
 async function exportWord() {
+  if (!(await exportWarnings('word'))) return;
   toast('Building Word document…', '', 1500);
   const html = await readModeHtml();
   const tmp = document.createElement('div');
@@ -743,12 +746,27 @@ async function exportWord() {
 
 async function startPresentation() {
   if (S.mode === 'source') S.text = els.source.value;
-  const { present } = await import('./present.js');
-  if (!present(S.text, renderCtx())) toast('Nothing to present');
+  const { present, splitSlides } = await import('./present.js');
+  const slides = splitSlides(S.text);
+  if (!slides.length) return toast(t('No slides found. Use --- to separate slides.'));
+  const items = [];
+  const separated = /^ {0,3}(-{3,}|\*{3,}|_{3,})\s*$/m.test(S.text.replace(FRONT_MATTER_RE, ''));
+  if (!separated) items.push(t('No --- separators found, so slides are split at h1/h2 headings'));
+  const long = slides.filter((s) => s.body.split('\n').filter((l) => l.trim()).length > 16).length;
+  if (long) items.push(t('{n} slide(s) have a lot of content and may overflow the screen', { n: long }));
+  if (slides.length === 1) items.push(t('The whole document fits on a single slide'));
+  const ok = await warnModal({ title: 'Presentation Warnings', description: 'Your document may not present optimally', items,
+    extra: `<p class="hint">${t('Tip: separate slides with a line containing only ---, and add speaker notes after a line starting with Note:')}</p>` });
+  if (ok) present(S.text, renderCtx());
 }
 
 async function showMindMap() {
   if (S.mode === 'source') S.text = els.source.value;
+  const items = [];
+  const heads = (S.text.match(/^#{1,6}\s/gm) || []).length;
+  if (!heads) items.push(t('No headings found for mind map; it is built from lists only'));
+  if (heads > 300) items.push(t('This document has {n} headings; a large mind map may be slow', { n: heads }));
+  if (!(await warnModal({ title: 'Mind Map Notice', description: 'Some issues were found with this document that may affect the mind map.', items }))) return;
   const { openMindMap } = await import('./mindmap.js');
   openMindMap(S.text, S.source.name).catch((e) => toast(t('Mind map failed: {e}', { e: e.message }), 'error'));
 }
@@ -939,6 +957,44 @@ async function openSettings(tab) {
   settingsUi?.destroy();
   settingsUi = await mountSettings($('#settings-root'), { onClose: () => dlg.close() });
   dlg.showModal();
+}
+
+async function whatsNewDialog() {
+  const { RELEASES } = await import('./whatsnew.js');
+  const sec = (title, list) => (list?.length ? `<h4>${t(title)}</h4><ul>${list.map((x) => `<li>${escapeHtml(x)}</li>`).join('')}</ul>` : '');
+  const r = RELEASES[0];
+  modal(`<h2>${t("What's New in v{v}", { v: r.version })}</h2>
+    <div class="whatsnew">${sec('New Features', r.features)}${sec('Improvements', r.improvements)}${sec('Bug Fixes', r.fixes)}
+    ${RELEASES.slice(1).map((o) => `<details><summary>v${o.version}</summary>${sec('New Features', o.features)}${sec('Improvements', o.improvements)}${sec('Bug Fixes', o.fixes)}</details>`).join('')}</div>
+    <div class="row"><span class="spacer"></span><button class="btn primary" value="ok">${t('Got it')}</button></div>`);
+}
+
+// Shows a list of potential problems; resolves true when the user continues.
+function warnModal({ title, description, items, continueLabel = 'Continue Anyway', extra = '' }) {
+  if (!items.length) return Promise.resolve(true);
+  return new Promise((resolve) => {
+    modal(`<h2>${t(title)}</h2><p class="hint">${t(description)}</p>
+      <ul class="warn-list">${items.map((i) => `<li>${icon('info', 15)}<span>${escapeHtml(i)}</span></li>`).join('')}</ul>${extra}
+      <div class="row"><span class="spacer"></span><button class="btn" value="cancel">${t('Cancel')}</button><button class="btn primary" value="go">${t(continueLabel)}</button></div>`,
+    (body, dlg) => { dlg.onclose = () => { dlg.onclose = null; resolve(dlg.returnValue === 'go'); }; });
+  });
+}
+
+async function exportWarnings(kind) {
+  const root = S.mode === 'read' ? els.doc : null;
+  const items = [];
+  const broken = root?.querySelectorAll('img.broken').length || 0;
+  if (broken) items.push(t('{n} image(s) could not be loaded and will be missing', { n: broken }));
+  const diagErr = root?.querySelectorAll('.diagram-error').length || 0;
+  if (diagErr) items.push(t('{n} diagram(s) failed to render; their source is exported instead', { n: diagErr }));
+  const remote = root ? [...root.querySelectorAll('img[src^="http"]')].length : 0;
+  if (remote && kind === 'html') items.push(t('{n} remote image(s) are linked, not embedded, and need an internet connection', { n: remote }));
+  if (kind === 'word') {
+    const words = textStats(S.text).words;
+    if (words > 30000) items.push(t('This document has {n} words; Word export may take a while', { n: words.toLocaleString() }));
+    if (root?.querySelector('.katex')) items.push(t('Math equations are exported as LaTeX text'));
+  }
+  return warnModal({ title: 'Export Warnings', description: 'Your document may have issues during export', items, continueLabel: 'Continue Export' });
 }
 
 function aboutDialog() {
@@ -1136,6 +1192,7 @@ const actions = {
   shortcuts: () => shortcutsHelp(),
   settings: () => openSettings(),
   about: () => aboutDialog(),
+  'whats-new': () => whatsNewDialog(),
   actions: () => toggleMenu('#actions-menu'),
   'toggle-edit': () => S.source && setMode(S.mode === 'read' ? 'edit' : 'read'),
   'toggle-theme': async () => {
@@ -1204,6 +1261,7 @@ function syncSortMenu() {
   $$('#fx-sort-menu [data-sort]').forEach((b) => b.classList.toggle('on', b.dataset.sort === L.fxSort));
   $$('#fx-sort-menu [data-sort-dir]').forEach((b) => b.classList.toggle('on', (b.dataset.sortDir === 'desc') === L.fxSortDesc));
   $('#fx-sort-menu [data-sort-toggle]').classList.toggle('on', L.fxFoldersFirst);
+  $$('#fx-sort-menu [data-group]').forEach((b) => b.classList.toggle('on', b.dataset.group === (L.fxGroup || 'none')));
   const txt = $('#fx-sort-menu [data-filter-type]');
   txt.classList.toggle('on', L.fxShowTxt && S.settings.renderTxt);
   txt.disabled = !S.settings.renderTxt;
@@ -1218,7 +1276,8 @@ $('#fx-sort-menu').addEventListener('click', (e) => {
   if (b.dataset.sortDir) L.fxSortDesc = b.dataset.sortDir === 'desc';
   if (b.dataset.sortToggle) L.fxFoldersFirst = !L.fxFoldersFirst;
   if (b.dataset.filterType) L.fxShowTxt = !L.fxShowTxt;
-  saveLayout({ fxSort: L.fxSort, fxSortDesc: L.fxSortDesc, fxFoldersFirst: L.fxFoldersFirst, fxShowTxt: L.fxShowTxt });
+  if (b.dataset.group) L.fxGroup = b.dataset.group;
+  saveLayout({ fxSort: L.fxSort, fxSortDesc: L.fxSortDesc, fxFoldersFirst: L.fxFoldersFirst, fxShowTxt: L.fxShowTxt, fxGroup: L.fxGroup });
   syncSortMenu();
   explorer.setOptions(explorerOptions());
 });
@@ -1226,7 +1285,7 @@ $('#fx-sort-menu').addEventListener('click', (e) => {
 function explorerOptions() {
   const L = S.layout;
   return {
-    sort: L.fxSort, desc: L.fxSortDesc, foldersFirst: L.fxFoldersFirst, showTxt: L.fxShowTxt && S.settings.renderTxt,
+    sort: L.fxSort, desc: L.fxSortDesc, foldersFirst: L.fxFoldersFirst, showTxt: L.fxShowTxt && S.settings.renderTxt, group: L.fxGroup || 'none',
     exclude: S.settings.excludeFoldersOn ? S.settings.excludeFolders : [],
   };
 }
@@ -1337,6 +1396,11 @@ async function init() {
   else $$('[data-ptab]').forEach((b) => b.classList.toggle('active', b.dataset.ptab === S.layout.panelTab));
   $$('[data-ppane]').forEach((p) => (p.hidden = p.dataset.ppane !== S.layout.panelTab));
   await openFromLocation();
+  const { pendingWhatsNew } = await chrome.storage.local.get('pendingWhatsNew');
+  if (pendingWhatsNew) {
+    chrome.storage.local.remove('pendingWhatsNew');
+    if (S.settings.whatsNew) whatsNewDialog();
+  }
 }
 
 init();

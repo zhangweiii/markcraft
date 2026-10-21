@@ -29,6 +29,8 @@
         <button data-sort="name">Name</button><button data-sort="modified">Modified</button><button data-sort="size">Size</button>
         <hr><button data-sort-dir="asc">Ascending</button><button data-sort-dir="desc">Descending</button>
         <hr><button data-sort-toggle="foldersFirst">Folders first</button>
+        <div class="menu-label">Group</div>
+        <button data-group="none">None</button><button data-group="type">Type</button><button data-group="modified">Modified</button>
         <div class="menu-label">Type</div>
         <button data-filter-type="txt">.txt</button>
       </div>
@@ -43,7 +45,7 @@
       <span id="fx-star" hidden></span>
       <div id="bookmarks" hidden></div>
       <div class="side-search" id="fx-filter-box" hidden><i data-icon="search" data-size="14"></i><input id="fx-filter" type="search" placeholder="Search files..." spellcheck="false"></div>
-      <div class="side-search" id="fx-search-box" hidden><i data-icon="search" data-size="14"></i><input id="fx-search" type="search" placeholder="Search in folder" spellcheck="false"></div>
+      <div class="side-search" id="fx-search-box" hidden><i data-icon="search" data-size="14"></i><input id="fx-search" type="search" placeholder="Enter search term..." spellcheck="false"><button class="icon-btn small toggle" data-fs="caseSensitive" title="Case sensitive">Aa</button><button class="icon-btn small toggle" data-fs="wholeWord" title="Whole word">ab</button><button class="icon-btn small toggle" data-fs="regex" title="Use regex">.*</button><button class="icon-btn small" data-fs="close" title="Close"><i data-icon="x" data-size="13"></i></button></div>
       <div id="fx-results" hidden></div>
       <div id="explorer"></div>
       <div class="resizer" data-resize="sidebar"></div>
@@ -183,6 +185,7 @@
     </div>
     <div class="ag-section">
       <button data-act="shortcuts"><i data-icon="keyboard"></i>Keyboard Shortcuts</button>
+      <button data-act="whats-new"><i data-icon="sparkles"></i>What's New</button>
       <button data-act="about"><i data-icon="info"></i>About MarkCraft</button>
     </div>
   </div>

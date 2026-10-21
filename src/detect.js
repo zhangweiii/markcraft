@@ -16,6 +16,7 @@ const TXT_EXT = /\.txt$/i;
 
   const go = () => location.replace(chrome.runtime.getURL('viewer.html') + '?file=' + encodeURIComponent(location.href));
   chrome.storage.sync.get('settings', ({ settings = {} }) => {
+    if (settings.enabled === false) return;
     if (location.protocol !== 'file:' && settings.interceptHttp === false) return;
     if (isTxt && settings.renderTxt === false) return;
     go();
