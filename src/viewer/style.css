@@ -290,6 +290,20 @@ svg.zoomer-content { background: var(--bg); border-radius: 8px; }
 ::highlight(review) { background-color: var(--review); text-decoration: underline 2px rgba(220, 150, 0, 0.9); }
 ::highlight(review-active) { background-color: var(--review-active); }
 ::highlight(review-draft) { background-color: var(--review); }
+::highlight(anno-yellow) { background-color: rgba(255, 221, 0, 0.45); }
+::highlight(anno-green) { background-color: rgba(52, 199, 89, 0.32); }
+::highlight(anno-blue) { background-color: rgba(10, 132, 255, 0.25); }
+::highlight(anno-pink) { background-color: rgba(255, 55, 145, 0.25); }
+::highlight(anno-underline) { text-decoration: underline 2px #d93025; text-underline-offset: 3px; }
+.kind-chip { font-size: 10px; padding: 1px 6px; border-radius: 9px; background: var(--ui-hover); }
+.hl-yellow { --hl: rgba(255, 221, 0, 0.6); } .hl-green { --hl: rgba(52, 199, 89, 0.5); } .hl-blue { --hl: rgba(10, 132, 255, 0.45); } .hl-pink { --hl: rgba(255, 55, 145, 0.45); }
+.kind-chip[class*='hl-'] { background: var(--hl); }
+.kind-chip.ul { text-decoration: underline 2px #d93025; background: none; }
+.comment-card blockquote[class*='hl-'] { border-left-color: var(--hl); }
+.fab { display: flex; align-items: center; gap: 2px; padding: 3px; }
+.fab button { border: 0; background: none; cursor: pointer; padding: 3px 7px; border-radius: 12px; font-size: 12px; color: var(--ui-fg); }
+.fab button:hover { background: var(--ui-hover); }
+.fab .sw { width: 18px; height: 18px; padding: 0; border-radius: 50%; background: var(--hl); border: 1px solid rgba(0,0,0,.12); margin: 0 2px; }
 
 /* find bar */
 #findbar {
@@ -378,9 +392,8 @@ svg.zoomer-content { background: var(--bg); border-radius: 8px; }
 .popover textarea:focus { border-color: var(--primary); }
 .row { display: flex; align-items: center; gap: 6px; }
 .fab {
-  position: fixed; z-index: 55; padding: 5px 10px; border: 1px solid var(--ui-border); border-radius: 16px; background: var(--ui-panel); box-shadow: var(--shadow); cursor: pointer; font-size: 12px;
+  position: fixed; z-index: 55; border: 1px solid var(--ui-border); border-radius: 16px; background: var(--ui-panel); box-shadow: var(--shadow);
 }
-.fab:hover { border-color: var(--primary); }
 
 /* modal */
 #modal { border: 1px solid var(--ui-border); border-radius: 12px; padding: 0; background: var(--ui-panel); color: var(--ui-fg); box-shadow: var(--shadow); width: min(820px, 92vw); }

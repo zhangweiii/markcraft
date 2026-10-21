@@ -41,18 +41,22 @@ export function rangeFromOffsets(index, start, end) {
 
 // Offset of a DOM point (from a Selection) within the index text.
 export function offsetOf(index, node, offset) {
-  if (node.nodeType !== Node.TEXT_NODE) {
-    // Element boundary: use the first indexed text node at or after the point.
-    const child = node.childNodes[offset];
-    const target = child || node;
-    for (const e of index.nodes) {
-      const pos = target.compareDocumentPosition(e.node);
-      if (e.node === target || pos & Node.DOCUMENT_POSITION_FOLLOWING || pos & Node.DOCUMENT_POSITION_CONTAINED_BY) return e.start;
-    }
-    return index.text.length;
+  if (node.nodeType === Node.TEXT_NODE) {
+    const e = index.nodes.find((x) => x.node === node);
+    return e ? e.start + offset : -1;
   }
-  const e = index.nodes.find((x) => x.node === node);
-  return e ? e.start + offset : -1;
+  // Element boundary point: before child `offset`, or after the element's contents.
+  const child = node.childNodes[offset];
+  for (const e of index.nodes) {
+    if (child) {
+      const pos = child.compareDocumentPosition(e.node);
+      if (e.node === child || pos & Node.DOCUMENT_POSITION_FOLLOWING) return e.start;
+    } else {
+      const pos = node.compareDocumentPosition(e.node);
+      if (pos & Node.DOCUMENT_POSITION_FOLLOWING && !(pos & Node.DOCUMENT_POSITION_CONTAINED_BY)) return e.start;
+    }
+  }
+  return index.text.length;
 }
 
 export function scrollRangeIntoView(range, scroller, center = true) {

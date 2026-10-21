@@ -221,6 +221,27 @@ await page.waitForTimeout(300);
 const prompt = await page.evaluate(() => window.__markcraft.review.buildPrompt('sample.md'));
 check('comment saved & prompt built', prompt.includes('Final paragraph') && prompt.includes('Make this punchier'));
 
+// Highlight annotation via the selection toolbar
+await page.evaluate(() => {
+  const h = [...document.querySelectorAll('#doc h3')].find((x) => x.textContent === 'Deep heading');
+  const r = document.createRange();
+  r.selectNodeContents(h);
+  getSelection().removeAllRanges();
+  getSelection().addRange(r);
+});
+await page.waitForSelector('#selection-fab:not([hidden])', { timeout: 2000 }).catch(() => {});
+await page.click('#selection-fab [data-color="green"]').catch(() => {});
+await page.waitForTimeout(200);
+const anno = await page.evaluate(() => ({ n: window.__markcraft.review.items.filter((i) => i.kind === 'highlight' && i.color === 'green').length, hl: CSS.highlights.has('anno-green') }));
+check('highlight annotation from selection toolbar', anno.n === 1 && anno.hl);
+const exported = await page.evaluate(async () => {
+  const d = document.createElement('div');
+  d.innerHTML = document.querySelector('#doc').innerHTML;
+  window.__markcraft.review.applyTo(d);
+  return d.querySelectorAll('mark.anno-green, mark.anno-comment').length;
+});
+check('annotations baked into exports', exported >= 2, String(exported));
+
 // Save via native host if installed, else skip
 const host = await page.evaluate(() => window.__markcraft.native.ping(true));
 if (host) {

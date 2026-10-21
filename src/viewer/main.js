@@ -639,6 +639,7 @@ async function readModeHtml({ portable = false } = {}) {
   }
   const clone = root.cloneNode(true);
   clone.querySelectorAll('.code-tools,.line-numbers,.diagram-zoom').forEach((n) => n.remove());
+  review.applyTo(clone);
   clone.querySelectorAll('.changed-flash,.flash,.zoomable').forEach((n) => n.classList.remove('changed-flash', 'flash', 'zoomable'));
   let html = clone.innerHTML;
   if (portable) {
@@ -732,7 +733,7 @@ function startComment() {
 
 function handoff() {
   if (!S.source) return;
-  if (!review.open.length) {
+  if (!review.openComments.length) {
     setPanel(true, 'comments');
     return toast('Add review comments first (select text, then ⌘⇧R)');
   }
@@ -774,7 +775,7 @@ function updateFab() {
   if (!sel || sel.isCollapsed || !root || !root.contains(sel.anchorNode) || !String(sel).trim() || !$('#composer').hidden) return hideFab();
   const rect = sel.getRangeAt(0).getBoundingClientRect();
   fab.hidden = false;
-  fab.style.left = Math.min(window.innerWidth - 120, rect.right + 6) + 'px';
+  fab.style.left = Math.max(8, Math.min(window.innerWidth - 300, rect.left)) + 'px';
   fab.style.top = Math.max(56, rect.top - 36) + 'px';
 }
 
@@ -1090,7 +1091,14 @@ $$('#mode-switch button').forEach((b) => b.addEventListener('click', () => setMo
 $$('[data-side]').forEach((b) => b.addEventListener('click', () => showSide(b.dataset.side)));
 $$('[data-ptab]').forEach((b) => b.addEventListener('click', () => setPanel(true, b.dataset.ptab)));
 fab.addEventListener('mousedown', (e) => e.preventDefault());
-fab.addEventListener('click', () => startComment());
+fab.addEventListener('click', (e) => {
+  const b = e.target.closest('[data-anno]');
+  if (!b) return;
+  hideFab();
+  if (b.dataset.anno === 'comment') return startComment();
+  review.annotate(b.dataset.anno, b.dataset.color);
+  if (S.layout.panelOpen) setPanel(true, 'comments');
+});
 document.addEventListener('selectionchange', () => {
   clearTimeout(updateFab.t);
   updateFab.t = setTimeout(updateFab, 150);
@@ -1123,6 +1131,9 @@ window.addEventListener('popstate', () => {
   if (!confirmDiscard()) return history.pushState(null, '', VIEWER + (S.source?.query || ''));
   openFromLocation();
 });
+// Bake annotations into the page for printing, then restore the live rendering.
+window.addEventListener('beforeprint', () => { if (S.mode === 'read' && review.items.length) { review.applyTo(els.doc); S.printBaked = true; } });
+window.addEventListener('afterprint', () => { if (S.printBaked) { S.printBaked = false; renderRead(); } });
 document.addEventListener('visibilitychange', () => { if (!document.hidden) checkDisk(); });
 matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
   if (S.settings.theme !== 'auto') return;

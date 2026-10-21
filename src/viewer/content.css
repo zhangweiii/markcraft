@@ -144,6 +144,10 @@
 .markdown-body img { max-width: 100%; box-sizing: content-box; background: transparent; }
 .markdown-body img.broken { min-width: 24px; min-height: 24px; outline: 1px dashed var(--border); }
 .markdown-body mark { background: var(--mark); color: inherit; }
+.markdown-body mark.anno-yellow { background: rgba(255, 221, 0, 0.45); } .markdown-body mark.anno-green { background: rgba(52, 199, 89, 0.32); }
+.markdown-body mark.anno-blue { background: rgba(10, 132, 255, 0.25); } .markdown-body mark.anno-pink { background: rgba(255, 55, 145, 0.25); }
+.markdown-body mark.anno-comment { background: rgba(255, 196, 0, 0.3); border-bottom: 2px solid rgba(220, 150, 0, 0.9); }
+.markdown-body u.anno { text-decoration: underline 2px #d93025; text-underline-offset: 3px; }
 .markdown-body kbd {
   display: inline-block; padding: 2px 5px; font: 0.8em var(--mono); line-height: 1.2;
   color: var(--fg); background: var(--code-bg); border: 1px solid var(--border); border-bottom-width: 2px; border-radius: 5px;

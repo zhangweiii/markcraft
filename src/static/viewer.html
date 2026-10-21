@@ -153,7 +153,14 @@
     <div class="row"><span class="spacer"></span><button class="btn small" data-act="cancel">Cancel</button><button class="btn small primary" data-act="save">Comment</button></div>
   </div>
 
-  <button id="selection-fab" class="fab" hidden title="Comment on selection (⌘⇧R)">💬 Comment</button>
+  <div id="selection-fab" class="fab" hidden>
+    <button data-anno="highlight" data-color="yellow" class="sw hl-yellow" title="Highlight yellow"></button>
+    <button data-anno="highlight" data-color="green" class="sw hl-green" title="Highlight green"></button>
+    <button data-anno="highlight" data-color="blue" class="sw hl-blue" title="Highlight blue"></button>
+    <button data-anno="highlight" data-color="pink" class="sw hl-pink" title="Highlight pink"></button>
+    <button data-anno="underline" title="Underline"><u>U</u></button>
+    <button data-anno="comment" title="Comment (⌘⇧R)">💬 Comment</button>
+  </div>
 
   <dialog id="modal"><form method="dialog" class="modal-body"></form></dialog>
   <div id="drop-overlay" hidden><div>Drop a Markdown file or folder to open it</div></div>

@@ -67,7 +67,7 @@ class Converter {
       if (tag === 'EM' || tag === 'I') next.italics = true;
       if (tag === 'DEL' || tag === 'S') next.strike = true;
       if (tag === 'U' || tag === 'INS') next.underline = true;
-      if (tag === 'MARK') next.highlight = 'yellow';
+      if (tag === 'MARK') next.highlight = { 'anno-green': 'green', 'anno-blue': 'cyan', 'anno-pink': 'magenta' }[[...el.classList].find((c) => c.startsWith('anno-'))] || 'yellow';
       if (tag === 'SUP') next.superScript = true;
       if (tag === 'SUB') next.subScript = true;
       if (tag === 'CODE' || tag === 'KBD') next.code = true;

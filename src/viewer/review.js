@@ -65,45 +65,69 @@ export class Review {
   }
 
   get open() { return this.items.filter((i) => !i.resolved); }
+  // Items that carry a note to hand off (plain highlights without text don't).
+  get openComments() { return this.open.filter((i) => i.comment?.trim()); }
 
-  // Capture the current selection inside the document and open the comment composer.
-  startFromSelection() {
+  // Capture the current selection inside the document.
+  captureSelection() {
     const sel = window.getSelection();
     const root = this.getRoot();
-    if (!sel || sel.isCollapsed || !root) return false;
+    if (!sel || sel.isCollapsed || !root) return null;
     const range = sel.getRangeAt(0);
-    if (!root.contains(range.commonAncestorContainer)) return false;
+    if (!root.contains(range.commonAncestorContainer)) return null;
     const index = buildIndex(root);
     const s = offsetOf(index, range.startContainer, range.startOffset);
     const e = offsetOf(index, range.endContainer, range.endOffset);
-    if (s < 0 || e <= s) return false;
+    if (s < 0 || e <= s) return null;
     const quote = index.text.slice(s, e);
-    if (!quote.trim()) return false;
-    this.draft = { quote, prefix: index.text.slice(Math.max(0, s - CTX), s), suffix: index.text.slice(e, e + CTX) };
-    const rect = range.getBoundingClientRect();
+    if (!quote.trim()) return null;
+    return { range, draft: { quote, prefix: index.text.slice(Math.max(0, s - CTX), s), suffix: index.text.slice(e, e + CTX) } };
+  }
+
+  // kind: 'comment' (opens the composer) | 'highlight' | 'underline'
+  annotate(kind = 'comment', color = 'yellow') {
+    const cap = this.captureSelection();
+    if (!cap) return false;
+    if (kind !== 'comment') {
+      this.add({ ...cap.draft, kind, color: kind === 'highlight' ? color : undefined, comment: '' });
+      window.getSelection()?.removeAllRanges();
+      return true;
+    }
+    this.draft = cap.draft;
+    const rect = cap.range.getBoundingClientRect();
     this.composer.hidden = false;
-    this.composer.querySelector('.composer-quote').textContent = quote.length > 160 ? quote.slice(0, 160) + '…' : quote;
+    this.composer.querySelector('.composer-quote').textContent = cap.draft.quote.length > 160 ? cap.draft.quote.slice(0, 160) + '…' : cap.draft.quote;
     const ta = this.composer.querySelector('textarea');
     ta.value = '';
     const w = 320;
     this.composer.style.left = Math.max(8, Math.min(window.innerWidth - w - 8, rect.left)) + 'px';
     const below = rect.bottom + 8;
     this.composer.style.top = (below + 180 > window.innerHeight ? Math.max(8, rect.top - 190) : below) + 'px';
-    if (supportsHighlights) CSS.highlights.set('review-draft', new Highlight(range.cloneRange()));
+    if (supportsHighlights) CSS.highlights.set('review-draft', new Highlight(cap.range.cloneRange()));
     ta.focus();
     return true;
+  }
+
+  startFromSelection() {
+    return this.annotate('comment');
+  }
+
+  add(fields) {
+    const item = { id: uid(), kind: 'comment', created: Date.now(), ...fields };
+    this.items.push(item);
+    this.persist();
+    this.paint();
+    this.focus(item.id, false);
+    return item;
   }
 
   commitComposer() {
     const text = this.composer.querySelector('textarea').value.trim();
     if (!this.draft || !text) return this.closeComposer();
-    const item = { id: uid(), ...this.draft, comment: text, created: Date.now() };
-    this.items.push(item);
+    const draft = this.draft;
     this.closeComposer();
     window.getSelection()?.removeAllRanges();
-    this.persist();
-    this.paint();
-    this.focus(item.id, false);
+    this.add({ ...draft, kind: 'comment', comment: text });
   }
 
   closeComposer() {
@@ -145,26 +169,60 @@ export class Review {
   paint() {
     this.anchor();
     if (supportsHighlights) {
-      const ranges = this.items.filter((i) => i._range && !i.resolved).map((i) => i._range);
-      ranges.length ? CSS.highlights.set('review', new Highlight(...ranges)) : CSS.highlights.delete('review');
+      for (const name of [...CSS.highlights.keys()]) if (name === 'review' || name.startsWith('anno-')) CSS.highlights.delete(name);
+      const groups = {};
+      for (const i of this.items) {
+        if (!i._range || i.resolved) continue;
+        const name = i.kind === 'highlight' ? `anno-${i.color || 'yellow'}` : i.kind === 'underline' ? 'anno-underline' : 'review';
+        (groups[name] ||= []).push(i._range);
+      }
+      for (const [name, ranges] of Object.entries(groups)) CSS.highlights.set(name, new Highlight(...ranges));
     }
     const open = this.open.length;
     this.countEl.textContent = open || '';
     this.countEl.hidden = !open;
     const sorted = [...this.items].sort((a, b) => (a._start ?? 1e12) - (b._start ?? 1e12));
+    const label = (i) => (i.kind === 'highlight' ? `<span class="kind-chip hl-${i.color || 'yellow'}">Highlight</span>` : i.kind === 'underline' ? '<span class="kind-chip ul">Underline</span>' : '');
     this.listEl.innerHTML = sorted.length
       ? sorted
           .map(
-            (i) => `<div class="comment-card${i.resolved ? ' resolved' : ''}${i._range ? '' : ' orphan'}" data-id="${i.id}">
-        <blockquote>${escapeHtml(i.quote.length > 220 ? i.quote.slice(0, 220) + '…' : i.quote)}</blockquote>
-        <textarea rows="2" spellcheck="true">${escapeHtml(i.comment)}</textarea>
-        <div class="comment-meta">${i._range ? '' : '<span class="tag warn" title="The quoted text is no longer in the document">detached</span>'}
+            (i) => `<div class="comment-card kind-${i.kind || 'comment'}${i.resolved ? ' resolved' : ''}${i._range ? '' : ' orphan'}" data-id="${i.id}">
+        <blockquote class="${i.kind === 'highlight' ? 'hl-' + (i.color || 'yellow') : ''}">${escapeHtml(i.quote.length > 220 ? i.quote.slice(0, 220) + '…' : i.quote)}</blockquote>
+        <textarea rows="${i.comment ? 2 : 1}" spellcheck="true" placeholder="${i.kind === 'comment' ? 'Comment' : 'Add a note (optional)'}">${escapeHtml(i.comment || '')}</textarea>
+        <div class="comment-meta">${label(i)}${i._range ? '' : '<span class="tag warn" title="The quoted text is no longer in the document">detached</span>'}
           <span class="time">${new Date(i.created).toLocaleString()}</span>
           <button class="link-btn" data-act="resolve">${i.resolved ? 'Reopen' : 'Resolve'}</button>
           <button class="link-btn danger" data-act="delete">Delete</button></div></div>`,
           )
           .join('')
-      : '<div class="empty-hint">Select text in the document and press <kbd>⌘⇧R</kbd> (or the 💬 button) to leave a review comment.</div>';
+      : '<div class="empty-hint">Select text in the document to highlight, underline or comment on it (<kbd>⌘⇧R</kbd> comments). Annotations are kept per document and appear in print and exports.</div>';
+  }
+
+  // Bake annotations into a rendered copy (for HTML/Word exports).
+  applyTo(root) {
+    const index = buildIndex(root);
+    const text = index.text;
+    for (const item of this.items) {
+      if (item.resolved) continue;
+      const at = text.indexOf(item.quote);
+      if (at < 0) continue;
+      const range = rangeFromOffsets(index, at, at + item.quote.length);
+      const tag = item.kind === 'underline' ? 'u' : 'mark';
+      // Wrap each text node piece separately so ranges may cross element boundaries.
+      const pieces = index.nodes.filter((n) => range.intersectsNode(n.node));
+      for (const { node } of pieces) {
+        const s0 = node === range.startContainer ? range.startOffset : 0;
+        const e0 = node === range.endContainer ? range.endOffset : node.data.length;
+        if (e0 <= s0) continue;
+        const r = document.createRange();
+        r.setStart(node, s0);
+        r.setEnd(node, e0);
+        const w = document.createElement(tag);
+        w.className = `anno anno-${item.kind === 'highlight' ? item.color || 'yellow' : item.kind || 'comment'}`;
+        if (item.comment) w.title = item.comment;
+        r.surroundContents(w);
+      }
+    }
   }
 
   focus(id, scroll) {
@@ -192,7 +250,7 @@ export class Review {
   }
 
   buildPrompt(docPath) {
-    const items = this.open.sort((a, b) => (a._start ?? 1e12) - (b._start ?? 1e12));
+    const items = this.openComments.sort((a, b) => (a._start ?? 1e12) - (b._start ?? 1e12));
     const lines = [
       `Please revise the Markdown document \`${docPath}\` to address the review comments below.`,
       'Each comment quotes the passage it refers to. Only change what the comments ask for and keep the rest of the document intact.',
