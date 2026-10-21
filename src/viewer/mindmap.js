@@ -11,9 +11,11 @@ function build() {
   overlay.innerHTML = `<div class="fullview-bar"><b>Mind map</b><span class="spacer"></span>
       <button class="btn small" data-mm="expand">Expand all</button>
       <button class="btn small" data-mm="collapse">Collapse</button>
-      <button class="btn small" data-mm="fit">Fit</button>
+      <button class="btn small" data-mm="fit" title="Fit to Screen (F)">Fit</button>
       <span class="sep"></span>
-      <button class="btn small" data-mm="svg">SVG</button><button class="btn small" data-mm="png">PNG</button><button class="btn small" data-mm="jpeg">JPEG</button>
+      <button class="btn small" data-mm="zoom-out" title="Zoom Out (-)">−</button><button class="btn small" data-mm="zoom-in" title="Zoom In (+)">+</button>
+      <button class="btn small" data-mm="download" title="Download (D)">Download</button>
+      <button class="btn small ghost" data-mm="help" title="Help (?)">?</button>
       <button class="icon-btn" data-mm="close" title="Close (Esc)">✕</button></div>
     <svg class="mindmap-svg"></svg>`;
   document.body.append(overlay);
@@ -23,8 +25,61 @@ function build() {
   });
   window.addEventListener('resize', () => !overlay.hidden && mm?.fit());
   window.addEventListener('keydown', (e) => {
-    if (!overlay.hidden && e.key === 'Escape') { e.stopPropagation(); close(); }
+    if (overlay.hidden || e.metaKey || e.ctrlKey || e.altKey) return;
+    const k = e.key;
+    const handled = () => { e.preventDefault(); e.stopPropagation(); };
+    if (k === 'Escape') { handled(); return overlay.querySelector('.mm-modal') ? overlay.querySelector('.mm-modal').remove() : close(); }
+    if (k === '+' || k === '=') { handled(); return mm.rescale(1.25); }
+    if (k === '-') { handled(); return mm.rescale(0.8); }
+    if (k === 'f' || k === 'F') { handled(); return mm.fit(); }
+    if (k === '0') { handled(); return act('expand'); }
+    if (/^[1-6]$/.test(k)) { handled(); return collapseTo(+k); }
+    if (k === 'd' || k === 'D') { handled(); return downloadDialog(); }
+    if (k === '?') { handled(); return helpDialog(); }
   }, true);
+}
+
+async function collapseTo(depth) {
+  const walk = (node, d) => {
+    node.payload = { ...(node.payload || {}), fold: d >= depth && node.children?.length ? 1 : 0 };
+    node.children?.forEach((c) => walk(c, d + 1));
+  };
+  walk(mm.state.data, 1);
+  await mm.renderData();
+  mm.fit();
+}
+
+function modalBox(html) {
+  overlay.querySelector('.mm-modal')?.remove();
+  const m = document.createElement('div');
+  m.className = 'mm-modal present-help';
+  m.innerHTML = `<div>${html}</div>`;
+  m.addEventListener('click', (e) => { if (e.target === m || e.target.closest('[data-close]')) m.remove(); });
+  overlay.append(m);
+  return m;
+}
+
+function helpDialog() {
+  const rows = [['+ / −', 'Zoom in / Zoom out'], ['F', 'Fit to screen'], ['0', 'Expand all nodes'], ['1–6', 'Collapse to depth N (1–6)'], ['D', 'Open download modal'], ['?', 'Show / hide this help'], ['Esc', 'Close mind map']];
+  modalBox(`<h3 style="margin-top:0">Mind Map Keyboard Shortcuts</h3><table>${rows.map(([k, d]) => `<tr><td><kbd>${k}</kbd></td><td>${d}</td></tr>`).join('')}</table>`);
+}
+
+function downloadDialog() {
+  const m = modalBox(`<h3 style="margin-top:0">Download Mind Map</h3><p class="hint">Export as PNG, SVG, or JPEG</p>
+    <p><b>Format</b><br><span class="segment mm-format"><button data-f="png" class="on">PNG</button><button data-f="svg">SVG</button><button data-f="jpeg">JPEG</button></span></p>
+    <p><b>Scale</b><br><span class="segment mm-scale"><button data-s="1">1×</button><button data-s="2" class="on">2×</button><button data-s="3">3×</button><button data-s="4">4×</button></span></p>
+    <p class="hint">PNG/JPEG exports simplified text only. Use SVG for full formatting.</p>
+    <div class="row"><span class="spacer"></span><button class="btn" data-close>Cancel</button><button class="btn primary" data-go>Download</button></div>`);
+  m.addEventListener('click', (e) => {
+    const seg = e.target.closest('.segment button');
+    if (seg) { seg.parentElement.querySelectorAll('button').forEach((b) => b.classList.toggle('on', b === seg)); return; }
+    if (e.target.closest('[data-go]')) {
+      const f = m.querySelector('.mm-format .on').dataset.f;
+      const scale = +m.querySelector('.mm-scale .on').dataset.s;
+      m.remove();
+      act(f, scale);
+    }
+  });
 }
 
 function setFold(node, fold) {
@@ -32,9 +87,13 @@ function setFold(node, fold) {
   node.children?.forEach((c) => setFold(c, fold));
 }
 
-async function act(a) {
+async function act(a, scale = 2) {
   if (a === 'close') return close();
   if (a === 'fit') return mm.fit();
+  if (a === 'zoom-in') return mm.rescale(1.25);
+  if (a === 'zoom-out') return mm.rescale(0.8);
+  if (a === 'download') return downloadDialog();
+  if (a === 'help') return helpDialog();
   if (a === 'expand' || a === 'collapse') {
     const root = mm.state.data;
     setFold(root, a === 'collapse');
@@ -46,7 +105,7 @@ async function act(a) {
   const name = (overlay.dataset.name || 'mindmap').replace(/\.\w+$/, '');
   let blob;
   if (a === 'svg') blob = new Blob([serialize(svg)], { type: 'image/svg+xml' });
-  else blob = await svgToBlob(serialize(svg), `image/${a}`, 2, a === 'jpeg' ? getComputedStyle(document.body).getPropertyValue('--bg') || '#fff' : null);
+  else blob = await svgToBlob(serialize(svg), `image/${a}`, scale, a === 'jpeg' ? getComputedStyle(document.body).getPropertyValue('--bg') || '#fff' : null);
   const link = document.createElement('a');
   link.href = URL.createObjectURL(blob);
   link.download = `${name}.${a === 'jpeg' ? 'jpg' : a}`;

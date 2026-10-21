@@ -254,3 +254,7 @@
 .hljs-strong { font-weight: bold; }
 .hljs-addition { color: var(--hl-add); background: var(--hl-add-bg); }
 .hljs-deletion { color: var(--hl-del); background: var(--hl-del-bg); }
+
+.markdown-body .export-toc { border: 1px solid var(--border-soft); border-radius: 10px; padding: 12px 20px; margin-bottom: 2em; break-after: page; }
+.markdown-body .export-toc h2 { margin-top: 0.4em; border: 0; }
+.markdown-body .export-toc ul { list-style: none; padding: 0; }

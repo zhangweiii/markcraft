@@ -666,12 +666,22 @@ async function readModeHtml({ portable = false } = {}) {
   clone.querySelectorAll('.code-tools,.line-numbers,.diagram-zoom').forEach((n) => n.remove());
   review.applyTo(clone);
   clone.querySelectorAll('.changed-flash,.flash,.zoomable').forEach((n) => n.classList.remove('changed-flash', 'flash', 'zoomable'));
+  if (S.settings.tocInExport) clone.prepend(exportToc(clone));
   let html = clone.innerHTML;
   if (portable) {
     // String-level swap: assigning a relative src to an element would start loading it.
     html = html.replace(/<img([^>]*?) src="blob:[^"]*"([^>]*?) data-src="([^"]*)"/g, '<img$1 src="$3"$2').replace(/<img([^>]*?) data-src="([^"]*)"([^>]*?) src="blob:[^"]*"/g, '<img$1 src="$2"$3');
   }
   return html;
+}
+
+function exportToc(root) {
+  const nav = document.createElement('nav');
+  nav.className = 'export-toc';
+  const heads = [...root.querySelectorAll('h1[id], h2[id], h3[id], h4[id]')];
+  const min = Math.min(...heads.map((h) => +h.tagName[1]));
+  nav.innerHTML = `<h2>${t('Table of Contents')}</h2><ul>${heads.map((h) => `<li style="margin-left:${(+h.tagName[1] - min) * 1.2}em"><a href="#${h.id}">${escapeHtml(h.textContent)}</a></li>`).join('')}</ul>`;
+  return nav;
 }
 
 async function exportHtml() {
@@ -1287,7 +1297,12 @@ window.addEventListener('popstate', () => {
   openFromLocation();
 });
 // Bake annotations into the page for printing, then restore the live rendering.
-window.addEventListener('beforeprint', () => { if (S.mode === 'read' && review.items.length) { review.applyTo(els.doc); S.printBaked = true; } });
+window.addEventListener('beforeprint', () => {
+  if (S.mode !== 'read') return;
+  if (review.items.length) review.applyTo(els.doc);
+  if (S.settings.tocInExport) els.doc.prepend(exportToc(els.doc));
+  S.printBaked = review.items.length > 0 || S.settings.tocInExport;
+});
 window.addEventListener('afterprint', () => { if (S.printBaked) { S.printBaked = false; renderRead(); } });
 document.addEventListener('visibilitychange', () => { if (!document.hidden) checkDisk(); });
 matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
