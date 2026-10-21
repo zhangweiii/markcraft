@@ -2,7 +2,8 @@
 @import 'katex/dist/katex.min.css';
 
 :root,
-:root[data-theme='light'] {
+:root[data-theme='light'],
+.present[data-theme='light'] {
   --bg: #ffffff;
   --fg: #1f2328;
   --muted: #59636e;
@@ -37,7 +38,9 @@
   --content-width: 860px;
 }
 
-:root[data-theme='dark'] {
+:root[data-theme='dark'],
+.present[data-theme='dark'],
+.present[data-theme='night'] {
   --bg: #0d1117;
   --fg: #e6edf3;
   --muted: #9198a1;
@@ -68,7 +71,8 @@
   --hl-del: #ffdcd7;
 }
 
-:root[data-theme='sepia'] {
+:root[data-theme='sepia'],
+.present[data-theme='sepia'] {
   --bg: #f8f1e3;
   --fg: #3b2f22;
   --muted: #7a6a55;
@@ -89,6 +93,8 @@
   --hl-attr: #1f5f8b;
   --hl-built: #a05a00;
 }
+
+.present[data-theme='night'] { --bg: #111827; --fg: #f3f4f6; --link: #fbbf24; --accent: #fbbf24; --code-bg: #1f2937; --border-soft: #374151; }
 
 :root[data-font='serif'] { --content-font: 'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia, 'Noto Serif', serif; }
 :root[data-font='mono'] { --content-font: var(--mono); }

@@ -623,28 +623,32 @@ function hideBanner() {
 
 // ---------- export ----------
 
-async function readModeHtml() {
+// Rendered HTML for exports. `portable` swaps local blob: images back to their
+// Markdown paths (for standalone HTML); otherwise blob URLs are kept so the
+// images can still be read (Word export).
+async function readModeHtml({ portable = false } = {}) {
+  let root = els.doc;
   if (S.mode !== 'read') {
-    const tmp = document.createElement('div');
-    tmp.innerHTML = renderMarkdown(S.text, S.settings);
-    tmp.style.cssText = 'position:absolute;left:-99999px;width:800px';
-    document.body.append(tmp);
-    await enhance(tmp, renderCtx());
-    tmp.remove();
-    return cleanExport(tmp);
+    root = document.createElement('div');
+    root.innerHTML = renderMarkdown(S.text, S.settings);
+    root.style.cssText = 'position:absolute;left:-99999px;width:800px';
+    document.body.append(root);
+    await enhance(root, renderCtx());
+    root.remove();
   }
-  return cleanExport(els.doc.cloneNode(true));
-}
-
-function cleanExport(root) {
-  root.querySelectorAll('.code-tools,.line-numbers').forEach((n) => n.remove());
-  root.querySelectorAll('[data-src]').forEach((img) => { if (img.src.startsWith('blob:')) img.src = img.dataset.src; });
-  root.querySelectorAll('.changed-flash,.flash').forEach((n) => n.classList.remove('changed-flash', 'flash'));
-  return root.innerHTML;
+  const clone = root.cloneNode(true);
+  clone.querySelectorAll('.code-tools,.line-numbers,.diagram-zoom').forEach((n) => n.remove());
+  clone.querySelectorAll('.changed-flash,.flash,.zoomable').forEach((n) => n.classList.remove('changed-flash', 'flash', 'zoomable'));
+  let html = clone.innerHTML;
+  if (portable) {
+    // String-level swap: assigning a relative src to an element would start loading it.
+    html = html.replace(/<img([^>]*?) src="blob:[^"]*"([^>]*?) data-src="([^"]*)"/g, '<img$1 src="$3"$2').replace(/<img([^>]*?) data-src="([^"]*)"([^>]*?) src="blob:[^"]*"/g, '<img$1 src="$2"$3');
+  }
+  return html;
 }
 
 async function exportHtml() {
-  const body = await readModeHtml();
+  const body = await readModeHtml({ portable: true });
   const css = await (await fetch('content-style.css')).text();
   const title = S.source.name.replace(MD_EXT, '');
   const html = `<!doctype html>
@@ -679,6 +683,37 @@ async function copyRich() {
     new ClipboardItem({ 'text/html': new Blob([html], { type: 'text/html' }), 'text/plain': new Blob([S.text], { type: 'text/plain' }) }),
   ]);
   toast('Copied as rich text');
+}
+
+async function exportWord() {
+  toast('Building Word document…', '', 1500);
+  const html = await readModeHtml();
+  const tmp = document.createElement('div');
+  tmp.className = 'markdown-body';
+  tmp.style.cssText = 'position:absolute;left:-99999px;width:800px';
+  tmp.innerHTML = html;
+  document.body.append(tmp);
+  try {
+    const [{ exportDocx }, { mermaidPlain }] = await Promise.all([import('./docx.js'), import('./diagrams.js')]);
+    const title = S.source.name.replace(MD_EXT, '');
+    download(await exportDocx(tmp, { title, mermaidPlain }), title + '.docx');
+  } catch (e) {
+    toast('Word export failed: ' + e.message, 'error', 5000);
+  } finally {
+    tmp.remove();
+  }
+}
+
+async function startPresentation() {
+  if (S.mode === 'source') S.text = els.source.value;
+  const { present } = await import('./present.js');
+  if (!present(S.text, renderCtx())) toast('Nothing to present');
+}
+
+async function showMindMap() {
+  if (S.mode === 'source') S.text = els.source.value;
+  const { openMindMap } = await import('./mindmap.js');
+  openMindMap(S.text, S.source.name).catch((e) => toast('Mind map failed: ' + e.message, 'error'));
 }
 
 async function printDoc() {
@@ -852,6 +887,7 @@ function shortcutsHelp() {
     [`${m}O`, 'Open file'], [`${m}S`, 'Save'], [`${s}${m}S`, 'Save as'], [`${m}P`, 'Print / PDF'],
     [`${m}E`, 'Toggle Read / Edit'], [`${s}${m}E`, 'Source mode'], [`${m}F`, 'Find'], [`${m}G / ${s}${m}G`, 'Next / previous match'],
     [`${m}\\`, 'Toggle sidebar'], [`${s}${m}L`, 'Toggle review / agent panel'], [`${s}${m}R`, 'Comment on selection'], [`${s}${m}Enter`, 'Hand off review prompt'],
+    [`⌥${m}P`, 'Present as slides (←/→, F fullscreen, N notes, T theme, A auto-play)'], [`⌥${m}M`, 'Mind map'],
     [`${m}T / ${m}N / ${m}W`, 'New tab / window / close (browser)'], ['?', 'This help'],
   ];
   modal(`<h2>Keyboard shortcuts</h2><table class="keys">${rows.map(([k, d]) => `<tr><td><kbd>${k}</kbd></td><td>${d}</td></tr>`).join('')}</table>
@@ -882,6 +918,10 @@ function onKey(e) {
       h();
       return;
     }
+  }
+  if (mod && e.altKey && S.source) {
+    if (e.code === 'KeyP') { e.preventDefault(); return startPresentation(); }
+    if (e.code === 'KeyM') { e.preventDefault(); return showMindMap(); }
   }
   if (e.key === 'Escape') {
     if (find.isOpen) find.close();
@@ -983,6 +1023,9 @@ const actions = {
     await acceptExternal(t);
   },
   'export-html': () => S.source && exportHtml(),
+  'export-docx': () => S.source && exportWord(),
+  present: () => S.source && startPresentation(),
+  mindmap: () => S.source && showMindMap(),
   'export-md': () => S.source && download(new Blob([S.text], { type: 'text/markdown' }), S.source.name),
   print: () => S.source && printDoc(),
   'copy-html': () => S.source && copyRich(),

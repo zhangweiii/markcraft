@@ -13,10 +13,14 @@ export const DIAGRAM_LANGS = {
 
 let mermaidP;
 let seq = 0;
-async function mermaid(source, dark) {
+async function mermaid(source, dark, _settings, plain = false) {
   mermaidP ||= import('mermaid').then((m) => m.default);
   const m = await mermaidP;
-  m.initialize({ startOnLoad: false, securityLevel: 'strict', theme: dark ? 'dark' : 'default', fontFamily: 'inherit' });
+  m.initialize({
+    startOnLoad: false, securityLevel: 'strict', theme: dark ? 'dark' : 'default', fontFamily: 'inherit',
+    // Plain SVG text labels (no foreignObject) so the diagram can be rasterized for export.
+    htmlLabels: !plain, flowchart: { htmlLabels: !plain },
+  });
   const id = 'mermaid-' + ++seq;
   try {
     return (await m.render(id, source)).svg;
@@ -73,6 +77,8 @@ async function plantuml(source, dark, settings) {
 }
 
 const RENDERERS = { mermaid, graphviz, wavedrom, plantuml };
+
+export const mermaidPlain = (source) => mermaid(source, false, null, true);
 
 export async function renderDiagram(kind, source, { dark, settings }) {
   return RENDERERS[kind](source, dark, settings);

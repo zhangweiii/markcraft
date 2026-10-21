@@ -221,6 +221,38 @@ svg.zoomer-content { background: var(--bg); border-radius: 8px; }
 .zoomer.single [data-z='prev'], .zoomer.single [data-z='next'], .zoomer.single .zoomer-count, .zoomer.single .zoomer-sep { display: none; }
 .zoomer-caption { position: absolute; top: 14px; left: 0; right: 0; text-align: center; color: #ddd; font-size: 13px; pointer-events: none; }
 
+/* full-screen views: mind map, presentation */
+.fullview { position: fixed; inset: 0; z-index: 250; background: var(--bg); display: flex; flex-direction: column; }
+.fullview-bar { display: flex; align-items: center; gap: 6px; padding: 8px 12px; border-bottom: 1px solid var(--ui-border); background: var(--ui-panel); }
+.fullview-bar .sep, .present-bar .sep { width: 1px; height: 18px; background: var(--ui-border); margin: 0 4px; }
+.mindmap-svg { flex: 1; width: 100%; color: var(--fg); }
+.mindmap-svg foreignObject { color: var(--fg); }
+
+.present { position: fixed; inset: 0; z-index: 260; background: var(--bg); color: var(--fg); display: flex; flex-direction: column; }
+.present-stage { position: relative; flex: 1; overflow: hidden; }
+.present .slide {
+  position: absolute; left: 50%; top: 50%; width: 1280px; height: 720px; max-width: none; padding: 64px 88px; overflow: hidden;
+  transform-origin: center; font-size: 30px; line-height: 1.45; display: flex; flex-direction: column; justify-content: center;
+}
+.present .slide.title-slide { text-align: center; }
+.present .slide.title-slide h1 { border: 0; font-size: 2.4em; }
+.present .slide h1 { font-size: 1.9em; } .present .slide h2 { font-size: 1.5em; border: 0; }
+.present .slide pre { font-size: 0.6em; }
+.present .slide input[type='checkbox'] { transform: scale(1.8); margin-right: 0.6em; }
+.present .slide img { max-height: 480px; object-fit: contain; }
+.present .slide .diagram svg { max-height: 520px; }
+.present-notes { max-height: 22vh; overflow: auto; padding: 12px 20px; font-size: 15px; white-space: pre-wrap; border-top: 1px solid var(--border-soft); background: var(--code-bg); }
+.present-progress { height: 3px; background: var(--border-soft); } .present-progress > div { height: 100%; background: var(--accent); transition: width 0.25s; }
+.present-bar {
+  position: absolute; bottom: 18px; left: 50%; transform: translateX(-50%); display: flex; align-items: center; gap: 2px; padding: 4px 6px;
+  border-radius: 10px; background: rgba(30, 32, 38, 0.9); color: #fff; opacity: 0; transition: opacity 0.25s;
+}
+.present.show-bar .present-bar, .present-bar:hover { opacity: 1; }
+.present-bar button { min-width: 32px; height: 30px; border: 0; border-radius: 7px; background: none; color: #fff; cursor: pointer; font-size: 15px; }
+.present-bar button:hover { background: rgba(255, 255, 255, 0.14); }
+.present-bar select { background: transparent; color: #fff; border: 1px solid rgba(255,255,255,.25); border-radius: 6px; height: 26px; }
+.present-count { font-size: 12px; padding: 0 6px; opacity: 0.85; }
+
 /* code block tools */
 .markdown-body pre.code-block .code-tools {
   position: absolute; top: 6px; right: 6px; display: flex; align-items: center; gap: 6px; opacity: 0; transition: opacity 0.15s;
@@ -390,7 +422,7 @@ table.keys td { padding: 4px 14px 4px 0; }
 /* print: just the document */
 @media print {
   body { display: block; overflow: visible; background: #fff; }
-  #topbar, #sidebar, #panel, #banner, #findbar, #toasts, #statusbar, #progress, .diagram-zoom, .zoomer, .fab, .popover, #editor, #source, #welcome, .code-tools { display: none !important; }
+  #topbar, #sidebar, #panel, #banner, #findbar, #toasts, #statusbar, #progress, .diagram-zoom, .zoomer, .fullview, .present, .fab, .popover, #editor, #source, #welcome, .code-tools { display: none !important; }
   #main, #content, #scroller { display: block; overflow: visible; height: auto; }
   #doc { padding: 0; max-width: none; }
   .markdown-body pre { white-space: pre-wrap; }

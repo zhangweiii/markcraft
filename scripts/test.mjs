@@ -99,6 +99,43 @@ await page.click('#doc .graphviz-diagram .diagram-zoom');
 check('diagram fullscreen zoom', await page.isVisible('.zoomer svg'));
 await page.keyboard.press('Escape');
 
+// Word export
+const dl = page.waitForEvent('download', { timeout: 20000 }).catch(() => null);
+await page.evaluate(() => document.querySelector('[data-act="export-docx"]').click());
+const download = await dl;
+if (download) {
+  const file = path.join(work, 'out.docx');
+  await download.saveAs(file);
+  const buf = await readFile(file);
+  check('Word export produces .docx', download.suggestedFilename() === 'sample.docx' && buf.slice(0, 2).toString() === 'PK', `${buf.length} bytes`);
+  const { execSync } = await import('node:child_process');
+  const xml = execSync(`unzip -p "${file}" word/document.xml`).toString();
+  const media = execSync(`unzip -l "${file}" | grep -c media/ || true`).toString().trim();
+  check('docx contains text, table and images', xml.includes('MarkCraft Sample') && xml.includes('<w:tbl>') && +media >= 2, `media=${media}`);
+} else check('Word export produces .docx', false, 'no download');
+
+// Mind map
+await page.click('[data-act="mindmap"]');
+await page.waitForSelector('.mindmap-view svg g circle', { timeout: 10000 }).catch(() => {});
+check('mind map renders', (await page.locator('.mindmap-view svg g circle').count()) > 3);
+await page.waitForTimeout(1200);
+if (process.env.SHOTS) await page.screenshot({ path: path.join(process.env.SHOTS, 'mindmap.png') });
+await page.keyboard.press('Escape');
+
+// Presentation
+await page.click('[data-act="present"]');
+await page.waitForSelector('.present .slide h1, .present .slide h2', { timeout: 5000 }).catch(() => {});
+const count1 = await page.textContent('.present-count');
+await page.keyboard.press('ArrowRight');
+await page.waitForTimeout(300);
+const count2 = await page.textContent('.present-count');
+check('presentation mode navigates slides', /^1 \/ \d+$/.test(count1) && count2.startsWith('2 /'), `${count1} → ${count2}`);
+if (process.env.SHOTS) await page.screenshot({ path: path.join(process.env.SHOTS, 'present.png') });
+await page.keyboard.press('Escape');
+await page.waitForTimeout(200);
+if (await page.isVisible('.present')) await page.keyboard.press('Escape');
+check('presentation exits', !(await page.isVisible('.present')));
+
 // Find
 await page.keyboard.press('Meta+f');
 await page.keyboard.type('searchterm');

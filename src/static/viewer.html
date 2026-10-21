@@ -19,6 +19,8 @@
       <button data-mode="edit" title="Live WYSIWYG editing (⌘E toggles)">Edit</button>
       <button data-mode="source" title="Markdown source (⌘⇧E)">Source</button>
     </div>
+    <button class="icon-btn" data-act="present" title="Present as slides (⌥⌘P)"><svg viewBox="0 0 16 16"><path d="M2 3h12v8H2zM8 11v3M5 14h6" fill="none" stroke="currentColor" stroke-width="1.4"/></svg></button>
+    <button class="icon-btn" data-act="mindmap" title="Mind map (⌥⌘M)"><svg viewBox="0 0 16 16"><circle cx="4" cy="8" r="2" fill="none" stroke="currentColor" stroke-width="1.4"/><path d="M6 8h3M9 4v8M9 4h3M9 12h3M9 8h3" fill="none" stroke="currentColor" stroke-width="1.4"/></svg></button>
     <button class="icon-btn" data-act="find" title="Find (⌘F)"><svg viewBox="0 0 16 16"><circle cx="7" cy="7" r="4.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="m10.5 10.5 3.5 3.5" stroke="currentColor" stroke-width="1.5"/></svg></button>
     <button class="icon-btn" data-act="comment" title="Comment on selection (⌘⇧R)"><svg viewBox="0 0 16 16"><path d="M2.5 3h11v8h-6l-3 2.5V11h-2z" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg></button>
     <button class="icon-btn" data-act="toggle-panel" title="Review &amp; agent panel (⌘⇧L)"><svg viewBox="0 0 16 16"><path d="M2 3h12v10H2zM10 3v10" fill="none" stroke="currentColor" stroke-width="1.4"/></svg><span class="badge" id="comment-count" hidden></span></button>
@@ -34,6 +36,10 @@
         <button data-act="save-as">Save as…<kbd>⇧⌘S</kbd></button>
         <button data-act="reload">Reload from disk</button>
         <hr>
+        <button data-act="present">Present as slides<kbd>⌥⌘P</kbd></button>
+        <button data-act="mindmap">Mind map<kbd>⌥⌘M</kbd></button>
+        <hr>
+        <button data-act="export-docx">Export Word (.docx)</button>
         <button data-act="export-html">Export HTML…</button>
         <button data-act="export-md">Download Markdown</button>
         <button data-act="print">Print / Save as PDF…<kbd>⌘P</kbd></button>
