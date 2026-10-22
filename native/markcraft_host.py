@@ -190,7 +190,7 @@ def h_agent(msg):
             elif text:
                 emit(text, cls or "")
     else:
-        cmd = [exe, "exec", "--skip-git-repo-check", "--full-auto", "-C", work, instructions]
+        cmd = [exe, "exec", "--skip-git-repo-check", "--sandbox", "workspace-write", "-C", work, instructions]
 
         def on_line(line, stream):
             if line.strip():

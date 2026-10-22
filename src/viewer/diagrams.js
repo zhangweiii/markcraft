@@ -19,6 +19,8 @@ async function mermaid(source, dark, _settings, plain = false) {
   const m = await mermaidP;
   m.initialize({
     startOnLoad: false, securityLevel: 'strict', theme: dark ? 'dark' : 'default', fontFamily: 'inherit',
+    // Mermaid 12 adds drop shadows to nodes; keep diagrams flat.
+    themeVariables: { dropShadow: 'none' },
     // Plain SVG text labels (no foreignObject) so the diagram can be rasterized for export.
     htmlLabels: !plain, flowchart: { htmlLabels: !plain },
   });
