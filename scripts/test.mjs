@@ -277,6 +277,7 @@ check('comment saved & prompt built', prompt.includes('Final paragraph') && prom
 // Highlight annotation via the selection toolbar
 await page.evaluate(() => {
   const h = [...document.querySelectorAll('#doc h3')].find((x) => x.textContent === 'Deep heading');
+  h.scrollIntoView({ block: 'center' });
   const r = document.createRange();
   r.selectNodeContents(h);
   getSelection().removeAllRanges();
