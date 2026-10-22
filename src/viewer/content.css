@@ -33,10 +33,10 @@
   --hl-del-bg: #ffebe9;
   --hl-del: #82071e;
   --content-font: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Noto Sans', Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji';
-  --content-line: 1.7;
+  --content-line: 1.6;
   --mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
   --content-size: 16px;
-  --content-width: 860px;
+  --content-width: 1000px;
   --inline-code-fg: #5054c4;
   --table-head: #f6f8fa;
 }
@@ -244,8 +244,9 @@
 .markdown-body .math-block { overflow-x: auto; overflow-y: hidden; text-align: center; }
 .markdown-body .katex { font-size: 1.1em; }
 .markdown-body .math-error { color: var(--caution); }
-.markdown-body .diagram { position: relative; text-align: center; overflow-x: auto; }
+.markdown-body .diagram { position: relative; text-align: center; overflow-x: auto; margin: 1.5em 0; }
 .markdown-body .diagram svg { max-width: 100%; height: auto; }
+.markdown-body .mermaid-diagram svg * { filter: none !important; }
 .markdown-body .wavedrom-diagram svg { background: transparent; }
 .markdown-body .diagram-error-msg { color: var(--caution); font-size: 0.85em; text-align: left; margin-bottom: 0.5em; }
 .markdown-body .diagram-error-msg.notice-msg { color: var(--muted); }
