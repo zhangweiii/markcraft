@@ -1,12 +1,14 @@
 # MarkCraft — Markdown 阅读器与编辑器（Chrome 扩展）
 
-免费、开源（MIT）。[English](README.md)
+免费、开源（MIT）。[English](README.md) · [问题反馈](https://github.com/zhangweiii/markcraft/issues)
 
 MarkCraft 是一个 Manifest V3 Chrome 扩展，用来阅读、编辑、批注和演示 Markdown 文件。所有处理都在本地完成，不收集任何数据。
 
 ## 安装
 
 ```sh
+git clone https://github.com/zhangweiii/markcraft.git
+cd markcraft
 npm install
 npm run build          # 输出到 dist/
 ```

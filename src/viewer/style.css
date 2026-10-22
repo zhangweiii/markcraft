@@ -356,6 +356,9 @@ table.keys td:first-child { width: 40%; }
 .about { text-align: center; }
 .about img { margin: 4px auto 8px; display: block; }
 .about p { color: var(--ui-muted); margin: 4px 0; }
+.about-links { margin-top: 12px !important; }
+.about-links a { color: var(--accent); text-decoration: none; }
+.about-links a:hover { text-decoration: underline; }
 
 /* welcome */
 #welcome { min-height: 100%; display: flex; align-items: flex-start; justify-content: center; padding: 10vh 24px 60px; }

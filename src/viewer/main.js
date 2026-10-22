@@ -1002,10 +1002,13 @@ async function exportWarnings(kind) {
   return warnModal({ title: 'Export Warnings', description: 'Your document may have issues during export', items, continueLabel: 'Continue Export' });
 }
 
+const REPO = 'https://github.com/zhangweiii/markcraft';
+
 function aboutDialog() {
   const m = chrome.runtime.getManifest();
   modal(`<div class="about"><img src="icons/128.png" width="72" height="72" alt=""><h2>MarkCraft</h2><p>v${m.version}</p>
-    <p>${t('Read, edit and review Markdown — right in Chrome.')}</p><p class="hint">${t('All processing happens locally in your browser. No data collection.')}</p></div>
+    <p>${t('Read, edit and review Markdown — right in Chrome.')}</p><p class="hint">${t('All processing happens locally in your browser. No data collection.')}</p>
+    <p class="about-links"><a href="${REPO}" target="_blank" rel="noopener">GitHub</a> · <a href="${REPO}/issues/new" target="_blank" rel="noopener">${t('Report an issue')}</a> · <a href="${REPO}/issues/new?labels=enhancement" target="_blank" rel="noopener">${t('Request a feature')}</a></p></div>
     <div class="row"><span class="spacer"></span><button class="btn primary" value="ok">${t('Close')}</button></div>`);
 }
 

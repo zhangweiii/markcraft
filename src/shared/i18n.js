@@ -1,6 +1,7 @@
 // UI localization. English strings are the keys; text nodes and title/placeholder
 // attributes of the interface are translated in place (document content never is).
 const ZH = {
+  'Report an issue': '反馈问题', 'Request a feature': '功能建议',
   // top bar & menu
   Read: '阅读', Edit: '编辑', Source: '源码', Save: '保存', More: '更多',
   'Read (⌘E toggles)': '阅读（⌘E 切换）', 'Live WYSIWYG editing (⌘E toggles)': '所见即所得编辑（⌘E 切换）', 'Markdown source (⌘⇧E)': 'Markdown 源码（⌘⇧E）',
