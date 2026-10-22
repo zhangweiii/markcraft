@@ -15,28 +15,18 @@ export const DIAGRAM_LANGS = {
 // Mermaid's `base` theme tuned to the document palette (content.css).
 const MERMAID_THEME = {
   light: {
-    background: '#fbfbf9', mainBkg: '#eef1f7', nodeBorder: '#a9b6cf', primaryColor: '#eef1f7', primaryBorderColor: '#a9b6cf', primaryTextColor: '#2b2c30',
-    secondaryColor: '#eef5ef', secondaryBorderColor: '#a9c9b2', tertiaryColor: '#f3f3f0', tertiaryBorderColor: '#e0dfdb',
-    lineColor: '#8d9099', textColor: '#45474d', edgeLabelBackground: '#fbfbf9', clusterBkg: '#f6f6f3', clusterBorder: '#e0dfdb',
-    noteBkgColor: '#faf2d6', noteBorderColor: '#e4d39a', noteTextColor: '#45474d',
+    background: '#ffffff', mainBkg: '#f3f3fe', nodeBorder: '#a9aaf2', primaryColor: '#f3f3fe', primaryBorderColor: '#a9aaf2', primaryTextColor: '#1d1e24',
+    secondaryColor: '#f1f8f4', secondaryBorderColor: '#9fd2b4', tertiaryColor: '#f7f7f9', tertiaryBorderColor: '#dcdde3',
+    lineColor: '#8b8d9b', textColor: '#3d3f4a', edgeLabelBackground: '#ffffff', clusterBkg: '#fafafb', clusterBorder: '#dcdde3',
+    noteBkgColor: '#fff8db', noteBorderColor: '#ecd690', noteTextColor: '#3d3f4a',
   },
   dark: {
-    darkMode: true, background: '#1c1d20', mainBkg: '#262a33', nodeBorder: '#4c5466', primaryColor: '#262a33', primaryBorderColor: '#4c5466', primaryTextColor: '#d6d6da',
-    secondaryColor: '#22302a', secondaryBorderColor: '#4a7a5c', tertiaryColor: '#242528', tertiaryBorderColor: '#3a3b40',
-    lineColor: '#7d8089', textColor: '#c4c5ca', edgeLabelBackground: '#1c1d20', clusterBkg: '#212225', clusterBorder: '#3a3b40',
-    noteBkgColor: '#2f2b20', noteBorderColor: '#6b5d36', noteTextColor: '#d6d6da',
-  },
-  sepia: {
-    background: '#f8f1e3', mainBkg: '#f1e6d0', nodeBorder: '#c9b48e', primaryColor: '#f1e6d0', primaryBorderColor: '#c9b48e', primaryTextColor: '#45392b',
-    secondaryColor: '#e9ead2', secondaryBorderColor: '#b5b78a', tertiaryColor: '#f0e6d2', tertiaryBorderColor: '#dccfb6',
-    lineColor: '#9a8a72', textColor: '#5a4a38', edgeLabelBackground: '#f8f1e3', clusterBkg: '#f2e9d7', clusterBorder: '#dccfb6',
-    noteBkgColor: '#f5e6b8', noteBorderColor: '#d8c088', noteTextColor: '#45392b',
+    darkMode: true, background: '#0d1117', mainBkg: '#1b2030', nodeBorder: '#4a5578', primaryColor: '#1b2030', primaryBorderColor: '#4a5578', primaryTextColor: '#e6edf3',
+    secondaryColor: '#18281f', secondaryBorderColor: '#3f8a5f', tertiaryColor: '#151b23', tertiaryBorderColor: '#3d444d',
+    lineColor: '#768390', textColor: '#c9d1d9', edgeLabelBackground: '#0d1117', clusterBkg: '#151b23', clusterBorder: '#3d444d',
+    noteBkgColor: '#2a2618', noteBorderColor: '#6b5a24', noteTextColor: '#e6edf3',
   },
 };
-
-// Exports (plain) always use the light palette.
-const mermaidPalette = (dark, plain) =>
-  dark ? 'dark' : !plain && document.documentElement.dataset.theme === 'sepia' ? 'sepia' : 'light';
 
 let mermaidP;
 let seq = 0;
@@ -45,7 +35,7 @@ async function mermaid(source, dark, _settings, plain = false) {
   const m = await mermaidP;
   m.initialize({
     startOnLoad: false, securityLevel: 'strict', theme: 'base', fontFamily: 'inherit',
-    themeVariables: { fontSize: '14px', dropShadow: 'none', ...MERMAID_THEME[mermaidPalette(dark, plain)] },
+    themeVariables: { fontSize: '14px', dropShadow: 'none', ...MERMAID_THEME[dark ? 'dark' : 'light'] },
     // Plain SVG text labels (no foreignObject) so the diagram can be rasterized for export.
     htmlLabels: !plain, flowchart: { htmlLabels: !plain, curve: 'basis', padding: 14 },
   });
