@@ -2,7 +2,9 @@
 
 **A free, open-source Markdown viewer, editor and reviewer for Chrome.** Open any `.md` file — local or remote — and get a polished reading view with diagrams, math, outline, annotations, live reload, WYSIWYG editing, presentation mode, mind maps and Word/HTML/PDF export. Everything runs locally; nothing is collected.
 
-[简体中文说明](README.zh-CN.md) · [Issues](https://github.com/zhangweiii/markcraft/issues)
+[Website](https://markcraft.cc) · [简体中文说明](README.zh-CN.md) · [Issues](https://github.com/zhangweiii/markcraft/issues)
+
+![MarkCraft rendering a Markdown document with a file sidebar, Mermaid diagram and outline](site/assets/screens/hero-light.jpg)
 
 ## Features
 
@@ -67,6 +69,7 @@ npm test                              # end-to-end tests (Playwright, test/fixtu
 | `src/popup.js`, `src/options.js` | toolbar popup and options page |
 | `native/` | native messaging host (`com.markcraft.host`) and installer |
 | `scripts/test.mjs` | end-to-end test suite |
+| `site/` | website ([markcraft.cc](https://markcraft.cc)), deployed to GitHub Pages; `npm run screenshots` refreshes its images |
 
 ## Privacy
 

@@ -138,7 +138,14 @@ body.wrap-names .toc-text, body.wrap-names .fx-name { overflow: visible; }
 #scroller { flex: 1; overflow-y: auto; overflow-x: hidden; position: relative; }
 #doc, #editor { margin: 0 auto; padding: 56px 56px 30vh; }
 body.layout-full #doc, body.layout-full #editor { max-width: none; }
-#editor .milkdown { background: transparent; }
+#editor .milkdown {
+  background: transparent;
+  /* Same typography and accent as the reading view. */
+  --crepe-font-title: var(--content-font);
+  --crepe-font-default: var(--content-font);
+  --crepe-font-code: var(--mono);
+  --crepe-color-primary: var(--accent);
+}
 #editor .milkdown .ProseMirror { padding: 0 0 0 40px; outline: none; }
 #editor .loading-hint { color: var(--muted); padding: 40px; text-align: center; }
 #source {

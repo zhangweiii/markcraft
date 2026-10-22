@@ -1,6 +1,8 @@
 # MarkCraft — Markdown 阅读器与编辑器（Chrome 扩展）
 
-免费、开源（MIT）。[English](README.md) · [问题反馈](https://github.com/zhangweiii/markcraft/issues)
+免费、开源（MIT）。[官网](https://markcraft.cc) · [English](README.md) · [问题反馈](https://github.com/zhangweiii/markcraft/issues)
+
+![MarkCraft 渲染 Markdown 文档：左侧文件栏、Mermaid 图表和右侧大纲](site/assets/screens/hero-light.jpg)
 
 MarkCraft 是一个 Manifest V3 Chrome 扩展，用来阅读、编辑、批注和演示 Markdown 文件。所有处理都在本地完成，不收集任何数据。
 

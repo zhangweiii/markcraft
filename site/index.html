@@ -1,0 +1,260 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>MarkCraft — Markdown viewer &amp; editor for Chrome</title>
+<meta name="description" content="Free, open-source Chrome extension that turns any .md file into a clean document with diagrams, math and an outline. Edit, annotate, present and export — 100% local.">
+<link rel="canonical" href="https://markcraft.cc/">
+<link rel="icon" href="assets/logo.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="assets/icon-128.png">
+<meta name="theme-color" content="#5b5bd6">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://markcraft.cc/">
+<meta property="og:title" content="MarkCraft — Markdown viewer & editor for Chrome">
+<meta property="og:description" content="Read, edit, review and present Markdown right in Chrome. Diagrams, math, outline, annotations, WYSIWYG editing, slides and export. Free & open source.">
+<meta property="og:image" content="https://markcraft.cc/assets/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="stylesheet" href="style.css">
+<script>
+  // Apply saved theme/language before paint to avoid a flash.
+  try {
+    const t = localStorage.getItem('mc-theme');
+    if (t) document.documentElement.dataset.theme = t;
+  } catch {}
+</script>
+</head>
+<body>
+
+<header class="nav">
+  <div class="wrap nav-inner">
+    <a class="brand" href="#top" aria-label="MarkCraft home"><img src="assets/logo.svg" width="28" height="28" alt=""><span>MarkCraft</span></a>
+    <nav class="nav-links" aria-label="Primary">
+      <a href="#features" data-i18n="nav.features">Features</a>
+      <a href="#install" data-i18n="nav.install">Install</a>
+      <a href="https://github.com/zhangweiii/markcraft/releases" data-i18n="nav.changelog">Releases</a>
+    </nav>
+    <div class="nav-actions">
+      <button class="icon-btn" id="lang-toggle" type="button" aria-label="Switch language" title="中文 / English">
+        <svg class="i" viewBox="0 0 24 24"><path d="m5 8 6 6"/><path d="m4 14 6-6 2-3"/><path d="M2 5h12"/><path d="M7 2h1"/><path d="m22 22-5-10-5 10"/><path d="M14 18h6"/></svg>
+        <span id="lang-label">中文</span>
+      </button>
+      <button class="icon-btn" id="theme-toggle" type="button" aria-label="Toggle dark mode">
+        <svg class="i sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
+        <svg class="i moon" viewBox="0 0 24 24"><path d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401"/></svg>
+      </button>
+      <a class="icon-btn gh" href="https://github.com/zhangweiii/markcraft" aria-label="GitHub repository">
+        <svg viewBox="0 0 16 16" width="18" height="18" fill="currentColor"><path d="M8 0c4.42 0 8 3.58 8 8a8.013 8.013 0 0 1-5.45 7.59c-.4.08-.55-.17-.55-.38 0-.27.01-1.13.01-2.2 0-.75-.25-1.23-.54-1.48 1.78-.2 3.65-.88 3.65-3.95 0-.88-.31-1.59-.82-2.15.08-.2.36-1.02-.08-2.12 0 0-.67-.22-2.2.82-.64-.18-1.32-.27-2-.27-.68 0-1.36.09-2 .27-1.53-1.03-2.2-.82-2.2-.82-.44 1.1-.16 1.92-.08 2.12-.51.56-.82 1.28-.82 2.15 0 3.06 1.86 3.75 3.64 3.95-.23.2-.44.55-.51 1.07-.46.21-1.61.55-2.33-.66-.15-.24-.6-.83-1.23-.82-.67.01-.27.38.01.53.34.19.73.9.82 1.13.16.45.68 1.31 2.69.94 0 .67.01 1.3.01 1.49 0 .21-.15.45-.55.38A7.995 7.995 0 0 1 0 8c0-4.42 3.58-8 8-8Z"/></svg>
+        <span class="stars" id="stars" hidden></span>
+      </a>
+    </div>
+  </div>
+</header>
+
+<main id="top">
+  <!-- Hero -->
+  <section class="hero">
+    <div class="hero-glow" aria-hidden="true"></div>
+    <div class="wrap hero-copy">
+      <a class="pill" href="https://github.com/zhangweiii/markcraft/releases" id="release-pill">
+        <span class="pill-dot"></span><span data-i18n="hero.pill">Free &amp; open source</span><span class="pill-sep">·</span><span class="version">v1.1.0</span>
+      </a>
+      <h1 data-i18n="hero.title">Markdown, <span class="grad">beautifully</span> read in Chrome.</h1>
+      <p class="lede" data-i18n="hero.lede">MarkCraft turns any <code>.md</code> file — on your disk or on the web — into a clean, readable document with diagrams, math and an outline. Edit it, annotate it, present it. Everything stays on your machine.</p>
+      <div class="cta">
+        <a class="btn primary download-link" href="https://github.com/zhangweiii/markcraft/releases/latest">
+          <svg class="i" viewBox="0 0 24 24"><path d="M12 15V3"/><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/></svg>
+          <span data-i18n="cta.download">Download for Chrome</span>
+        </a>
+        <a class="btn ghost" href="https://github.com/zhangweiii/markcraft">
+          <svg viewBox="0 0 16 16" width="16" height="16" fill="currentColor"><path d="M8 0c4.42 0 8 3.58 8 8a8.013 8.013 0 0 1-5.45 7.59c-.4.08-.55-.17-.55-.38 0-.27.01-1.13.01-2.2 0-.75-.25-1.23-.54-1.48 1.78-.2 3.65-.88 3.65-3.95 0-.88-.31-1.59-.82-2.15.08-.2.36-1.02-.08-2.12 0 0-.67-.22-2.2.82-.64-.18-1.32-.27-2-.27-.68 0-1.36.09-2 .27-1.53-1.03-2.2-.82-2.2-.82-.44 1.1-.16 1.92-.08 2.12-.51.56-.82 1.28-.82 2.15 0 3.06 1.86 3.75 3.64 3.95-.23.2-.44.55-.51 1.07-.46.21-1.61.55-2.33-.66-.15-.24-.6-.83-1.23-.82-.67.01-.27.38.01.53.34.19.73.9.82 1.13.16.45.68 1.31 2.69.94 0 .67.01 1.3.01 1.49 0 .21-.15.45-.55.38A7.995 7.995 0 0 1 0 8c0-4.42 3.58-8 8-8Z"/></svg>
+          <span data-i18n="cta.github">View on GitHub</span>
+        </a>
+      </div>
+      <p class="fine" data-i18n="hero.fine">Works in Chrome, Edge, Brave and Arc · MIT License · No account needed</p>
+    </div>
+
+    <div class="wrap-wide">
+      <figure class="window hero-shot">
+        <div class="window-bar" aria-hidden="true">
+          <span class="dots"><i></i><i></i><i></i></span>
+          <span class="tab"><img src="assets/logo.svg" width="14" height="14" alt="">launch-plan.md</span>
+          <span class="url">file:///Users/you/atlas/launch-plan.md</span>
+        </div>
+        <img class="shot light-only" src="assets/screens/hero-light.jpg" width="1440" height="900" alt="MarkCraft showing a Markdown launch plan with a file sidebar, a rendered Mermaid flowchart and an outline panel">
+        <img class="shot dark-only" src="assets/screens/hero-dark.jpg" width="1440" height="900" alt="The same document in MarkCraft's dark theme" loading="lazy">
+      </figure>
+    </div>
+  </section>
+
+  <!-- Strip -->
+  <section class="strip wrap" aria-label="Highlights">
+    <div><strong>0</strong><span data-i18n="strip.data">bytes uploaded — rendering happens in your browser</span></div>
+    <div><strong>4</strong><span data-i18n="strip.diagrams">diagram engines: Mermaid, Graphviz, WaveDrom, PlantUML</span></div>
+    <div><strong>3</strong><span data-i18n="strip.modes">modes: Read, WYSIWYG Edit and Source</span></div>
+    <div><strong>$0</strong><span data-i18n="strip.free">forever — no trials, no limits, no pro tier</span></div>
+  </section>
+
+  <!-- Features -->
+  <section id="features" class="features">
+    <article class="feature wrap">
+      <div class="feature-copy">
+        <p class="eyebrow"><span>##</span> <span data-i18n="f1.eyebrow">Rendering</span></p>
+        <h2 data-i18n="f1.title">Diagrams, math and code that just render.</h2>
+        <p data-i18n="f1.body">Mermaid flowcharts, Graphviz, WaveDrom and KaTeX appear inline — no build step, no copy-pasting into another tool. Open any diagram fullscreen, zoom and pan, or download it as SVG, PNG or JPEG.</p>
+        <ul class="checks">
+          <li data-i18n="f1.l1">GitHub Flavored Markdown, alerts, footnotes and task lists</li>
+          <li data-i18n="f1.l2">12 syntax themes, file names on code blocks, copy buttons</li>
+          <li data-i18n="f1.l3">Mintlify components: Cards, Tabs, Steps, Accordions, CodeGroups</li>
+        </ul>
+      </div>
+      <figure class="window feature-shot"><img src="assets/screens/diagrams.jpg" width="1440" height="900" loading="lazy" alt="A Mermaid flowchart, a metrics table and a KaTeX formula rendered in MarkCraft"></figure>
+    </article>
+
+    <article class="feature wrap flip">
+      <div class="feature-copy">
+        <p class="eyebrow"><span>##</span> <span data-i18n="f2.eyebrow">Review &amp; AI</span></p>
+        <h2 data-i18n="f2.title">Review like a document. Hand it off to AI.</h2>
+        <p data-i18n="f2.body">Highlight in four colors, underline and comment on any passage. Turn your notes into a ready-to-paste prompt — or run Claude Code or Codex on an isolated copy and review the diff before anything touches your file.</p>
+        <ul class="checks">
+          <li data-i18n="f2.l1">Filter by type, track what's unresolved</li>
+          <li data-i18n="f2.l2">Annotations survive reloads and show up in print and exports</li>
+          <li data-i18n="f2.l3">Accept or dismiss agent changes with a clear +/− diff</li>
+        </ul>
+      </div>
+      <figure class="window feature-shot"><img src="assets/screens/review.jpg" width="1440" height="900" loading="lazy" alt="Highlights, an underline and comments listed in MarkCraft's annotations panel"></figure>
+    </article>
+
+    <article class="feature wrap">
+      <div class="feature-copy">
+        <p class="eyebrow"><span>##</span> <span data-i18n="f3.eyebrow">Editing</span></p>
+        <h2 data-i18n="f3.title">Edit in place, then save straight back.</h2>
+        <p data-i18n="f3.body">Switch between Read, a WYSIWYG editor and raw Source with one shortcut. Diagrams and formulas preview while you type, and <kbd>⌘S</kbd> writes the file back to disk.</p>
+        <ul class="checks">
+          <li data-i18n="f3.l1">Live reload when the file changes — with a +/− diff you can accept</li>
+          <li data-i18n="f3.l2">Folder browser with sorting, bookmarks and full-text search</li>
+          <li data-i18n="f3.l3">Paste Markdown, drag &amp; drop files, start new documents</li>
+        </ul>
+      </div>
+      <figure class="window feature-shot"><img src="assets/screens/edit.jpg" width="1440" height="900" loading="lazy" alt="WYSIWYG editing with a live Mermaid preview under the code block"></figure>
+    </article>
+
+    <article class="feature wrap flip">
+      <div class="feature-copy">
+        <p class="eyebrow"><span>##</span> <span data-i18n="f4.eyebrow">Present &amp; export</span></p>
+        <h2 data-i18n="f4.title">From notes to slides and mind maps.</h2>
+        <p data-i18n="f4.body">Split a document with <code>---</code> and present it full screen, with your own fonts, colors and background. Or explore its structure as an interactive mind map. When it's time to share, export to Word, HTML or PDF.</p>
+        <ul class="checks">
+          <li data-i18n="f4.l1">Speaker notes, auto-play, keyboard and touch navigation</li>
+          <li data-i18n="f4.l2">Mind maps download as SVG, PNG or JPEG</li>
+          <li data-i18n="f4.l3">Exports keep your highlights and an optional table of contents</li>
+        </ul>
+      </div>
+      <div class="stack">
+        <figure class="window feature-shot back"><img src="assets/screens/mindmap.jpg" width="1440" height="900" loading="lazy" alt="Interactive mind map generated from a document's headings"></figure>
+        <figure class="window feature-shot front"><img src="assets/screens/present.jpg" width="1440" height="900" loading="lazy" alt="A slide in presentation mode with a dark custom theme"></figure>
+      </div>
+    </article>
+
+    <article class="feature wrap">
+      <div class="feature-copy">
+        <p class="eyebrow"><span>##</span> <span data-i18n="f5.eyebrow">Settings</span></p>
+        <h2 data-i18n="f5.title">Make it read the way you like.</h2>
+        <p data-i18n="f5.body">Light, dark and sepia themes, five font families, adjustable size, line height and width. Turn individual Markdown plugins on or off, and rebind every shortcut. The interface speaks English and 简体中文.</p>
+        <ul class="checks">
+          <li data-i18n="f5.l1">Quick Settings anywhere with <kbd>⌘,</kbd></li>
+          <li data-i18n="f5.l2">Import and export your settings as JSON</li>
+          <li data-i18n="f5.l3">Right-to-left text detected automatically</li>
+        </ul>
+      </div>
+      <figure class="window feature-shot"><img src="assets/screens/settings.jpg" width="1440" height="900" loading="lazy" alt="MarkCraft's settings panel on the Appearance tab"></figure>
+    </article>
+  </section>
+
+  <!-- Grid -->
+  <section class="more wrap">
+    <h2 class="center" data-i18n="more.title">And all the small things.</h2>
+    <div class="grid">
+      <div class="card"><svg class="i" viewBox="0 0 24 24"><path d="M8 5h13"/><path d="M13 12h8"/><path d="M13 19h8"/><path d="M3 10a2 2 0 0 0 2 2h3"/><path d="M3 5v12a2 2 0 0 0 2 2h3"/></svg><h3 data-i18n="g1.t">Outline</h3><p data-i18n="g1.d">Scroll-spy table of contents with search and collapse.</p></div>
+      <div class="card"><svg class="i" viewBox="0 0 24 24"><path d="m21 21-4.34-4.34"/><circle cx="11" cy="11" r="8"/></svg><h3 data-i18n="g2.t">Find in page</h3><p data-i18n="g2.d">Case, whole-word and regex matching that skips the UI.</p></div>
+      <div class="card"><svg class="i" viewBox="0 0 24 24"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M8 16H3v5"/></svg><h3 data-i18n="g3.t">Live reload</h3><p data-i18n="g3.d">Watches the file and shows what changed before applying it.</p></div>
+      <div class="card"><svg class="i" viewBox="0 0 24 24"><path d="M6 22a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h8a2.4 2.4 0 0 1 1.704.706l3.588 3.588A2.4 2.4 0 0 1 20 8v12a2 2 0 0 1-2 2z"/><path d="M14 2v5a1 1 0 0 0 1 1h5"/><path d="M12 18v-6"/><path d="m9 15 3 3 3-3"/></svg><h3 data-i18n="g4.t">Word, HTML, PDF</h3><p data-i18n="g4.d">Export with diagrams, math and annotations intact.</p></div>
+      <div class="card"><svg class="i" viewBox="0 0 24 24"><path d="M10 8h.01"/><path d="M12 12h.01"/><path d="M14 8h.01"/><path d="M16 12h.01"/><path d="M18 8h.01"/><path d="M6 8h.01"/><path d="M7 16h10"/><path d="M8 12h.01"/><rect width="20" height="16" x="2" y="4" rx="2"/></svg><h3 data-i18n="g5.t">Shortcuts</h3><p data-i18n="g5.d">21 actions, all rebindable, with a cheat sheet on <kbd>?</kbd>.</p></div>
+      <div class="card"><svg class="i" viewBox="0 0 24 24"><path d="m6 14 1.5-2.9A2 2 0 0 1 9.24 10H20a2 2 0 0 1 1.94 2.5l-1.54 6a2 2 0 0 1-1.95 1.5H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h3.9a2 2 0 0 1 1.69.9l.81 1.2a2 2 0 0 0 1.67.9H18a2 2 0 0 1 2 2v2"/></svg><h3 data-i18n="g6.t">Folders</h3><p data-i18n="g6.d">Browse, group by type or date, bookmark and search folders.</p></div>
+      <div class="card"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg><h3 data-i18n="g7.t">Web Markdown</h3><p data-i18n="g7.d">Raw files on GitHub and elsewhere open rendered, too.</p></div>
+      <div class="card"><svg class="i" viewBox="0 0 24 24"><path d="m7 11 2-2-2-2"/><path d="M11 13h4"/><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/></svg><h3 data-i18n="g8.t">Native helper</h3><p data-i18n="g8.d">Optional: direct saves, a built-in terminal and agents.</p></div>
+    </div>
+  </section>
+
+  <!-- Privacy -->
+  <section class="privacy">
+    <div class="wrap privacy-inner">
+      <svg class="i shield" viewBox="0 0 24 24"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m9 12 2 2 4-4"/></svg>
+      <div>
+        <h2 data-i18n="privacy.title">Private by design.</h2>
+        <p data-i18n="privacy.body">No accounts, no analytics, no telemetry. Your documents are rendered inside your browser and never uploaded anywhere. The one optional network feature — PlantUML — stays off until you explicitly allow it.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Install -->
+  <section id="install" class="install wrap">
+    <p class="eyebrow center"><span>##</span> <span data-i18n="install.eyebrow">Install</span></p>
+    <h2 class="center" data-i18n="install.title">Up and running in a minute.</h2>
+    <ol class="steps">
+      <li>
+        <span class="num">1</span>
+        <h3 data-i18n="s1.t">Download</h3>
+        <p data-i18n="s1.d">Get the latest <a class="download-link" href="https://github.com/zhangweiii/markcraft/releases/latest">markcraft zip</a> and unzip it.</p>
+      </li>
+      <li>
+        <span class="num">2</span>
+        <h3 data-i18n="s2.t">Load it</h3>
+        <p data-i18n="s2.d">Open <button class="copy" type="button" data-copy="chrome://extensions">chrome://extensions</button>, turn on <b>Developer mode</b>, click <b>Load unpacked</b> and pick the folder.</p>
+      </li>
+      <li>
+        <span class="num">3</span>
+        <h3 data-i18n="s3.t">Allow local files</h3>
+        <p data-i18n="s3.d">In MarkCraft's <b>Details</b>, enable <b>Allow access to file URLs</b>. Then open any <code>.md</code> file.</p>
+      </li>
+    </ol>
+    <div class="source">
+      <p data-i18n="install.source">Prefer building from source?</p>
+      <pre><code>git clone https://github.com/zhangweiii/markcraft.git
+cd markcraft &amp;&amp; npm install &amp;&amp; npm run build   # → dist/</code></pre>
+    </div>
+  </section>
+
+  <!-- Final CTA -->
+  <section class="final">
+    <div class="wrap final-inner">
+      <img src="assets/logo.svg" width="64" height="64" alt="">
+      <h2 data-i18n="final.title">Free forever. Open source.</h2>
+      <p data-i18n="final.body">MarkCraft is MIT-licensed and built in the open. Issues, ideas and pull requests are welcome.</p>
+      <div class="cta">
+        <a class="btn primary download-link" href="https://github.com/zhangweiii/markcraft/releases/latest">
+          <svg class="i" viewBox="0 0 24 24"><path d="M12 15V3"/><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/></svg>
+          <span data-i18n="cta.download">Download for Chrome</span>
+        </a>
+        <a class="btn ghost" href="https://github.com/zhangweiii/markcraft/issues/new" data-i18n="cta.feedback">Share feedback</a>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="footer">
+  <div class="wrap footer-inner">
+    <span class="brand small"><img src="assets/logo.svg" width="20" height="20" alt="">MarkCraft</span>
+    <nav aria-label="Footer">
+      <a href="https://github.com/zhangweiii/markcraft">GitHub</a>
+      <a href="https://github.com/zhangweiii/markcraft/releases" data-i18n="nav.changelog">Releases</a>
+      <a href="https://github.com/zhangweiii/markcraft/issues" data-i18n="footer.issues">Issues</a>
+      <a href="https://github.com/zhangweiii/markcraft/blob/main/LICENSE" data-i18n="footer.license">MIT License</a>
+    </nav>
+    <span class="muted">© <span id="year">2026</span> <span data-i18n="footer.by">MarkCraft contributors</span></span>
+  </div>
+</footer>
+
+<script src="main.js" defer></script>
+</body>
+</html>
