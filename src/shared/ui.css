@@ -1,13 +1,13 @@
 /* Design tokens and shared controls (viewer, settings, popup). */
 :root {
-  --ui-bg: #f7f7f9;
+  --ui-bg: #f7f7f7;
   --ui-panel: #ffffff;
   --ui-raised: #ffffff;
-  --ui-fg: #1d1d27;
-  --ui-muted: #6c6c7c;
-  --ui-faint: #9b9bab;
-  --ui-border: #e8e8ee;
-  --ui-hover: rgba(30, 30, 60, 0.055);
+  --ui-fg: #333333;
+  --ui-muted: #777777;
+  --ui-faint: #a3a3a3;
+  --ui-border: #e5e5e5;
+  --ui-hover: rgba(0, 0, 0, 0.05);
   --accent: #5b5bd6;
   --accent-2: #8b5cf6;
   --accent-fg: #ffffff;
@@ -26,14 +26,14 @@
   color-scheme: light;
 }
 :root[data-theme='dark'] {
-  --ui-bg: #101014;
-  --ui-panel: #17171d;
-  --ui-raised: #1d1d25;
-  --ui-fg: #ececf2;
-  --ui-muted: #9d9daf;
-  --ui-faint: #6f6f80;
-  --ui-border: #26262f;
-  --ui-hover: rgba(255, 255, 255, 0.06);
+  --ui-bg: #2e3135;
+  --ui-panel: #363b40;
+  --ui-raised: #3d4248;
+  --ui-fg: #d4d8dc;
+  --ui-muted: #9da2a6;
+  --ui-faint: #70767c;
+  --ui-border: #474d54;
+  --ui-hover: rgba(255, 255, 255, 0.07);
   --accent: #8b8cf8;
   --accent-soft: rgba(139, 140, 248, 0.16);
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);

@@ -21,10 +21,10 @@ const MERMAID_THEME = {
     noteBkgColor: '#fff8db', noteBorderColor: '#ecd690', noteTextColor: '#3d3f4a',
   },
   dark: {
-    darkMode: true, background: '#0d1117', mainBkg: '#1b2030', nodeBorder: '#4a5578', primaryColor: '#1b2030', primaryBorderColor: '#4a5578', primaryTextColor: '#e6edf3',
-    secondaryColor: '#18281f', secondaryBorderColor: '#3f8a5f', tertiaryColor: '#151b23', tertiaryBorderColor: '#3d444d',
-    lineColor: '#768390', textColor: '#c9d1d9', edgeLabelBackground: '#0d1117', clusterBkg: '#151b23', clusterBorder: '#3d444d',
-    noteBkgColor: '#2a2618', noteBorderColor: '#6b5a24', noteTextColor: '#e6edf3',
+    darkMode: true, background: '#363b40', mainBkg: '#41474e', nodeBorder: '#5f676f', primaryColor: '#41474e', primaryBorderColor: '#5f676f', primaryTextColor: '#d4d8dc',
+    secondaryColor: '#3b4a42', secondaryBorderColor: '#5d7a68', tertiaryColor: '#3d4248', tertiaryBorderColor: '#474d54',
+    lineColor: '#8b939b', textColor: '#c4c9ce', edgeLabelBackground: '#363b40', clusterBkg: '#3a3f45', clusterBorder: '#474d54',
+    noteBkgColor: '#4a4536', noteBorderColor: '#7a6d48', noteTextColor: '#d4d8dc',
   },
 };
 
