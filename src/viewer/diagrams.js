@@ -15,16 +15,16 @@ export const DIAGRAM_LANGS = {
 // Mermaid's `base` theme tuned to the document palette (content.css).
 const MERMAID_THEME = {
   light: {
-    background: '#ffffff', mainBkg: '#f3f3fe', nodeBorder: '#a9aaf2', primaryColor: '#f3f3fe', primaryBorderColor: '#a9aaf2', primaryTextColor: '#1d1e24',
-    secondaryColor: '#f1f8f4', secondaryBorderColor: '#9fd2b4', tertiaryColor: '#f7f7f9', tertiaryBorderColor: '#dcdde3',
-    lineColor: '#8b8d9b', textColor: '#3d3f4a', edgeLabelBackground: '#ffffff', clusterBkg: '#fafafb', clusterBorder: '#dcdde3',
-    noteBkgColor: '#fff8db', noteBorderColor: '#ecd690', noteTextColor: '#3d3f4a',
+    background: '#ffffff', mainBkg: '#eef6ff', nodeBorder: '#9ec8f5', primaryColor: '#eef6ff', primaryBorderColor: '#9ec8f5', primaryTextColor: '#262626',
+    secondaryColor: '#ebf8f1', secondaryBorderColor: '#9bd9b8', tertiaryColor: '#fafafa', tertiaryBorderColor: '#e7e9e8',
+    lineColor: '#8a8f8d', textColor: '#585a5a', edgeLabelBackground: '#ffffff', clusterBkg: '#fafafa', clusterBorder: '#e7e9e8',
+    noteBkgColor: '#fff9e6', noteBorderColor: '#f3d68a', noteTextColor: '#585a5a',
   },
   dark: {
-    darkMode: true, background: '#363b40', mainBkg: '#41474e', nodeBorder: '#5f676f', primaryColor: '#41474e', primaryBorderColor: '#5f676f', primaryTextColor: '#d4d8dc',
-    secondaryColor: '#3b4a42', secondaryBorderColor: '#5d7a68', tertiaryColor: '#3d4248', tertiaryBorderColor: '#474d54',
-    lineColor: '#8b939b', textColor: '#c4c9ce', edgeLabelBackground: '#363b40', clusterBkg: '#3a3f45', clusterBorder: '#474d54',
-    noteBkgColor: '#4a4536', noteBorderColor: '#7a6d48', noteTextColor: '#d4d8dc',
+    darkMode: true, background: '#1f1f1f', mainBkg: '#1c2a3a', nodeBorder: '#3d6a99', primaryColor: '#1c2a3a', primaryBorderColor: '#3d6a99', primaryTextColor: '#d8dad9',
+    secondaryColor: '#1b3026', secondaryBorderColor: '#3f7d5c', tertiaryColor: '#262626', tertiaryBorderColor: '#3a3a3a',
+    lineColor: '#8a8f8d', textColor: '#c2c5c4', edgeLabelBackground: '#1f1f1f', clusterBkg: '#262626', clusterBorder: '#3a3a3a',
+    noteBkgColor: '#33301f', noteBorderColor: '#6b5d36', noteTextColor: '#d8dad9',
   },
 };
 
