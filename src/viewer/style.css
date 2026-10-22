@@ -14,7 +14,7 @@
 html, body { height: 100%; margin: 0; }
 * { scrollbar-width: thin; scrollbar-color: color-mix(in srgb, var(--ui-fg) 16%, transparent) transparent; }
 ::selection { background: color-mix(in srgb, var(--accent) 22%, transparent); }
-body { background: var(--bg); color: var(--ui-fg); font: 13px/1.45 var(--ui-font); overflow: hidden; -webkit-font-smoothing: antialiased; }
+body { background: var(--bg); color: var(--ui-fg); font: 13px/1.45 var(--ui-font); overflow: hidden; }
 body.loading #app { visibility: hidden; }
 body.resizing { cursor: col-resize; user-select: none; }
 button, input, select, textarea { font: inherit; color: inherit; }
@@ -179,13 +179,11 @@ body:not(.dirty) #save-btn { opacity: 0.55; }
   position: fixed; right: calc(var(--dock-right, 0px) + 16px); bottom: 16px; z-index: 40; display: flex; flex-direction: column; gap: 2px; padding: 4px;
   border-radius: 14px; border: 1px solid var(--ui-border); background: color-mix(in srgb, var(--ui-raised) 82%, transparent);
   backdrop-filter: saturate(1.6) blur(16px); -webkit-backdrop-filter: saturate(1.6) blur(16px); box-shadow: var(--shadow); transition: right 0.2s;
-  opacity: 0.72;
 }
-#dock:hover, #dock:focus-within { opacity: 1; }
 body.panel-open #dock { --dock-right: var(--panel-width); }
 .fab-btn {
   position: relative; width: 34px; height: 34px; border-radius: 10px; display: flex; align-items: center; justify-content: center; cursor: pointer;
-  border: 0; background: none; color: var(--ui-muted); transition: background 0.15s, color 0.15s;
+  border: 0; background: none; color: var(--ui-fg); transition: background 0.15s, color 0.15s;
 }
 .fab-btn:hover { background: var(--ui-hover); color: var(--ui-fg); }
 .fab-btn .ic { width: 17px; height: 17px; }
