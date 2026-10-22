@@ -1,12 +1,12 @@
 /* Design tokens and shared controls (viewer, settings, popup). */
 :root {
-  --ui-bg: #f6f6f8;
+  --ui-bg: #f7f7f9;
   --ui-panel: #ffffff;
   --ui-raised: #ffffff;
   --ui-fg: #1d1d27;
   --ui-muted: #6c6c7c;
   --ui-faint: #9b9bab;
-  --ui-border: #e7e7ee;
+  --ui-border: #e8e8ee;
   --ui-hover: rgba(30, 30, 60, 0.055);
   --accent: #5b5bd6;
   --accent-2: #8b5cf6;
@@ -26,13 +26,13 @@
   color-scheme: light;
 }
 :root[data-theme='dark'] {
-  --ui-bg: #111116;
+  --ui-bg: #101014;
   --ui-panel: #17171d;
-  --ui-raised: #1e1e26;
+  --ui-raised: #1d1d25;
   --ui-fg: #ececf2;
   --ui-muted: #9d9daf;
   --ui-faint: #6f6f80;
-  --ui-border: #2a2a34;
+  --ui-border: #26262f;
   --ui-hover: rgba(255, 255, 255, 0.06);
   --accent: #8b8cf8;
   --accent-soft: rgba(139, 140, 248, 0.16);
