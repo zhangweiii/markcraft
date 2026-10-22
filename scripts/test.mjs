@@ -204,7 +204,7 @@ if (await page.isVisible('.present')) await page.keyboard.press('Escape');
 check('presentation exits', !(await page.isVisible('.present')));
 
 // Find
-await page.keyboard.press('Meta+f');
+await page.keyboard.press('ControlOrMeta+f');
 await page.keyboard.type('searchterm');
 await page.waitForTimeout(300);
 check('find counts matches', (await page.textContent('.find-count')) === '1 / 2', await page.textContent('.find-count'));
@@ -265,11 +265,11 @@ await page.evaluate(() => {
   getSelection().removeAllRanges();
   getSelection().addRange(r);
 });
-await page.keyboard.press('Meta+Shift+r');
+await page.keyboard.press('ControlOrMeta+Shift+r');
 await page.waitForSelector('#composer:not([hidden])', { timeout: 2000 }).catch(() => {});
 check('comment composer opens', await page.isVisible('#composer'));
 await page.keyboard.type('Make this punchier');
-await page.keyboard.press('Meta+Enter');
+await page.keyboard.press('ControlOrMeta+Enter');
 await page.waitForTimeout(300);
 const prompt = await page.evaluate(() => window.__markcraft.review.buildPrompt('sample.md'));
 check('comment saved & prompt built', prompt.includes('Final paragraph') && prompt.includes('Make this punchier'));
@@ -298,7 +298,7 @@ check('annotations baked into exports', exported >= 2, String(exported));
 // Save via native host if installed, else skip
 const host = await page.evaluate(() => window.__markcraft.native.ping(true));
 if (host) {
-  await page.keyboard.press('Meta+s');
+  await page.keyboard.press('ControlOrMeta+s');
   await page.waitForTimeout(800);
   check('save writes file (native host)', (await readFile(sample, 'utf8')).includes('## Typed heading'));
 } else console.log('- native host not installed; skipping save test');
@@ -316,7 +316,7 @@ check('.txt rendered as Markdown', (await p2.textContent('#doc h1').catch(() => 
 await p2.close();
 
 // Settings modal: toggle a plugin and a layout option
-await page.keyboard.press('Meta+,');
+await page.keyboard.press('ControlOrMeta+,');
 await page.waitForSelector('#settings-modal[open] .st-tabs', { timeout: 3000 }).catch(() => {});
 check('quick settings opens (⌘,)', await page.isVisible('#settings-modal .st-tabs'));
 await page.click('.st-tabs [data-tab="plugins"]');
