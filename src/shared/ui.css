@@ -1,13 +1,13 @@
 /* Design tokens and shared controls (viewer, settings, popup). */
 :root {
-  --ui-bg: #fafafa;
+  --ui-bg: #f6f6f8;
   --ui-panel: #ffffff;
   --ui-raised: #ffffff;
-  --ui-fg: #262626;
-  --ui-muted: #585a5a;
-  --ui-faint: #8a8f8d;
-  --ui-border: #e7e9e8;
-  --ui-hover: rgba(0, 0, 0, 0.04);
+  --ui-fg: #1d1d27;
+  --ui-muted: #6c6c7c;
+  --ui-faint: #9b9bab;
+  --ui-border: #e7e7ee;
+  --ui-hover: rgba(30, 30, 60, 0.055);
   --accent: #5b5bd6;
   --accent-2: #8b5cf6;
   --accent-fg: #ffffff;
@@ -26,13 +26,13 @@
   color-scheme: light;
 }
 :root[data-theme='dark'] {
-  --ui-bg: #191919;
-  --ui-panel: #1f1f1f;
-  --ui-raised: #262626;
-  --ui-fg: #d8dad9;
-  --ui-muted: #a3a7a5;
-  --ui-faint: #6f7372;
-  --ui-border: #303030;
+  --ui-bg: #111116;
+  --ui-panel: #17171d;
+  --ui-raised: #1e1e26;
+  --ui-fg: #ececf2;
+  --ui-muted: #9d9daf;
+  --ui-faint: #6f6f80;
+  --ui-border: #2a2a34;
   --ui-hover: rgba(255, 255, 255, 0.06);
   --accent: #8b8cf8;
   --accent-soft: rgba(139, 140, 248, 0.16);
