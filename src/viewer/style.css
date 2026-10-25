@@ -309,7 +309,7 @@ body:has(#editbar:not([hidden])) #banner { top: 62px; }
 .sel-toolbar button:hover { background: var(--ui-hover); }
 .sel-toolbar .sw::before { content: ''; width: 16px; height: 16px; border-radius: 50%; background: var(--hl); box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.1); }
 
-/* agent + terminal */
+/* agent */
 .field-label { font-weight: 600; font-size: 12.5px; }
 #agent-prompt, #handoff-text {
   width: 100%; border: 1px solid var(--ui-border); border-radius: 10px; padding: 10px 12px; background: var(--ui-raised); resize: vertical; outline: none; font: 13px/1.5 var(--ui-font);
@@ -329,14 +329,6 @@ body:has(#editbar:not([hidden])) #banner { top: 62px; }
 .log-line.stderr { color: var(--danger); }
 .log-line.dim { color: var(--ui-faint); }
 .result-head { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; flex-wrap: wrap; }
-#term-pane { padding: 0; }
-.term-head { display: flex; align-items: center; padding: 6px 12px; font: 11px var(--mono); color: var(--ui-muted); border-bottom: 1px solid var(--ui-border); }
-#term-out { flex: 1; margin: 0; padding: 10px 12px; overflow: auto; font: 12px/1.5 var(--mono); white-space: pre-wrap; word-break: break-word; background: #0f0f14; color: #e6e6ef; }
-#term-out .cmd { color: #a5a6ff; font-weight: 600; }
-#term-out .stderr { color: #ff8a8a; }
-.term-line { display: flex; align-items: center; gap: 6px; padding: 8px 12px; border-top: 1px solid var(--ui-border); font: 12px var(--mono); }
-.term-line input { flex: 1; border: 0; outline: none; background: transparent; font: 12px var(--mono); }
-#term-host { margin: 12px; }
 
 /* composer */
 .popover {

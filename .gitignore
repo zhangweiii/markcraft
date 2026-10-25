@@ -2,6 +2,9 @@ node_modules
 dist
 *.zip
 scripts/key.pem
-native/config.json
-native/markcraft-host
 .DS_Store
+
+# Chrome Web Store submission handbook (local only) and the generated listing
+# images it points at — regenerate the images with `npm run store-assets`.
+PUBLISH.md
+store-assets

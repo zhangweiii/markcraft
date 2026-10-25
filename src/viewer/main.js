@@ -7,10 +7,10 @@ import { Outline } from './toc.js';
 import { FindBar } from './find.js';
 import { Explorer } from './explorer.js';
 import { Review } from './review.js';
-import { AgentPanel, TerminalPanel } from './agent.js';
+import { AgentPanel } from './agent.js';
 import { renderDiff, diffStats } from './diffview.js';
 import { sourceFromQuery, sourceFromHandle, NewSource, HandleSource, UrlSource, MD_EXT, VIEWER, PICKER_TYPES } from './sources.js';
-import * as native from './native.js';
+import * as llm from '../shared/llm.js';
 import { textStats, formatStats, Zoomer, attachZoom } from './extras.js';
 import { setupFolderTools } from './folders.js';
 import { t, setLanguage, localize } from '../shared/i18n.js';
@@ -538,6 +538,8 @@ async function save({ as = false, quiet = false } = {}) {
       await w.close();
       next = await sourceFromHandle(handle);
     } else {
+      // Extensions cannot write file:// URLs directly; the first save asks for the file once.
+      if (S.source.kind === 'url' && S.source.isFile && !S.source.bound) toast(t('Choose the original file once — later saves go straight to it'), '', 5000);
       next = await S.source.write(text);
     }
     S.diskText = text;
@@ -860,7 +862,6 @@ function setPanel(open, tab) {
     $$('[data-ptab]').forEach((b) => b.classList.toggle('active', b.dataset.ptab === tab));
     $$('[data-ppane]').forEach((p) => (p.hidden = p.dataset.ppane !== tab));
     if (tab === 'agent') agent.refresh();
-    if (tab === 'terminal') { terminal.refresh(); setTimeout(() => $('#term-input').focus(), 0); }
   }
   saveLayout({ panelOpen: open, panelTab: S.layout.panelTab });
 }
@@ -961,6 +962,8 @@ async function openSettings(tab) {
   const dlg = $('#settings-modal');
   settingsUi?.destroy();
   settingsUi = await mountSettings($('#settings-root'), { onClose: () => dlg.close() });
+  // The AI provider is stored outside the synced settings, so re-check it on close.
+  dlg.onclose = () => { if (!$('#agent-pane').hidden) agent.refresh(); };
   dlg.showModal();
 }
 
@@ -1162,12 +1165,10 @@ const agent = new AgentPanel({
     if (andSave) await save();
     else toast('Changes applied — not saved yet');
   },
-  getSettings: () => S.settings,
-  saveSettings: (patch) => setSettings(patch),
+  openSettings: (tab) => openSettings(tab),
   toast,
 });
 
-const terminal = new TerminalPanel({ el: $('#term-pane'), getCwd: () => S.source?.dirPath });
 
 const actions = {
   'toggle-sidebar': () => setSidebar(!S.layout.sidebarOpen),
@@ -1301,7 +1302,7 @@ function explorerOptions() {
 document.addEventListener('click', (e) => {
   const btn = e.target.closest('[data-act]');
   if (!e.target.closest('.menu, .actions-grid, [data-act="actions"], [data-act="fx-sort"], [data-act="fx-more"]')) closeMenus();
-  if (btn && actions[btn.dataset.act] && !btn.closest('#findbar, #composer, #agent-pane, #term-pane, .comment-card, #settings-modal')) {
+  if (btn && actions[btn.dataset.act] && !btn.closest('#findbar, #composer, #agent-pane, .comment-card, #settings-modal')) {
     if (btn.closest('.menu, .actions-grid') ) closeMenus();
     actions[btn.dataset.act]();
     return;
@@ -1400,6 +1401,8 @@ async function init() {
   setupDrop();
   explorer.setOptions(explorerOptions(), false);
   document.body.classList.toggle('sidebar-closed', !S.layout.sidebarOpen);
+  // A tab saved by an older version (e.g. the removed terminal) falls back to the outline.
+  if (!$(`[data-ptab="${S.layout.panelTab}"]`)) S.layout.panelTab = 'outline';
   if (S.layout.panelOpen) setPanel(true, S.layout.panelTab);
   else $$('[data-ptab]').forEach((b) => b.classList.toggle('active', b.dataset.ptab === S.layout.panelTab));
   $$('[data-ppane]').forEach((p) => (p.hidden = p.dataset.ppane !== S.layout.panelTab));
@@ -1411,7 +1414,11 @@ async function init() {
   }
 }
 
-init();
+// viewer.html must be web-accessible for detect.js to redirect to it, which also lets
+// any site embed it. Refuse to run framed so a page cannot clickjack saves or the
+// agent.
+if (window.top === window) init();
+else document.body.replaceChildren('MarkCraft cannot be embedded in another page.');
 
 // Exposed for automated tests.
-window.__markcraft = { S, setMode, save, acceptExternal, review, native, db, UrlSource };
+window.__markcraft = { S, setMode, save, acceptExternal, review, db, UrlSource, llm };

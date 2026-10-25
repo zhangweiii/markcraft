@@ -85,14 +85,13 @@
       <div id="statusbar" class="pill"><span id="stats"></span><span id="progress-pct" hidden></span></div>
     </main>
 
-    <!-- Right: outline / annotations / agent / terminal -->
+    <!-- Right: outline / annotations / agent -->
     <aside id="panel" class="side right" hidden>
       <div class="resizer left" data-resize="panel"></div>
       <header class="side-head tabs">
         <button data-ptab="outline" title="Table of Contents"><i data-icon="toc"></i></button>
         <button data-ptab="comments" title="Annotations"><i data-icon="annotations"></i><span class="badge" id="comment-count" hidden></span></button>
         <button data-ptab="agent" title="Ask Agent"><i data-icon="agent"></i></button>
-        <button data-ptab="terminal" title="Terminal"><i data-icon="terminal"></i></button>
         <span class="spacer"></span>
         <button class="icon-btn" data-act="toggle-panel" title="Close sidebar"><i data-icon="panel-right" data-size="17"></i></button>
       </header>
@@ -125,27 +124,18 @@
         <label class="field-label" for="agent-prompt">Ask an agent to change this document</label>
         <textarea id="agent-prompt" rows="5" placeholder="e.g. Tighten the introduction and add a summary table of the options"></textarea>
         <div class="pane-actions">
-          <select id="agent-cli" title="Agent CLI">
-            <option value="claude" data-label="Claude Code">Claude Code</option>
-            <option value="codex" data-label="Codex">Codex</option>
-          </select>
           <span class="spacer"></span>
           <button class="btn small ghost" data-act="agent-copy">Copy prompt</button>
           <button class="btn small" data-act="agent-stop" hidden>Stop</button>
           <button class="btn small primary" data-act="agent-run" title="⌘Enter">Run</button>
         </div>
         <p class="hint">The agent edits an isolated copy. You review a +/− diff before anything is applied.</p>
+        <p id="agent-dest" class="hint" hidden></p>
         <div id="agent-status" class="status-line"></div>
         <div id="agent-log"></div>
         <div id="agent-result" hidden></div>
       </div>
 
-      <div class="panel-pane" data-ppane="terminal" id="term-pane" hidden>
-        <div id="term-host" class="notice" hidden>The terminal needs the native helper. Run <code>./native/install.sh</code> from the MarkCraft folder, then reload.</div>
-        <div class="term-head"><span id="term-cwd"></span><span class="spacer"></span><button class="btn small ghost" data-act="term-clear">Clear</button></div>
-        <pre id="term-out"></pre>
-        <div class="term-line"><span>$</span><input id="term-input" spellcheck="false" autocomplete="off" placeholder="command (cd works; Ctrl+C stops)"></div>
-      </div>
     </aside>
   </div>
 

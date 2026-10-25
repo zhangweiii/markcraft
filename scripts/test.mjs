@@ -3,6 +3,7 @@
 import { chromium } from 'playwright';
 import { cp, mkdtemp, readFile, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
+import http from 'node:http';
 import path from 'node:path';
 
 const root = path.resolve(import.meta.dirname, '..');
@@ -10,11 +11,8 @@ const ext = path.join(root, 'dist');
 const work = await mkdtemp(path.join(process.env.TMPDIR || tmpdir(), 'mc-test-'));
 await cp(path.join(root, 'test/fixtures'), work, { recursive: true });
 const sample = path.join(work, 'sample.md');
-
-// With a custom profile Chrome looks for native hosts inside the profile directory.
 const profile = await mkdtemp(path.join(process.env.TMPDIR || tmpdir(), 'mc-profile-'));
-const hostManifest = path.join(process.env.HOME, process.platform === 'darwin' ? 'Library/Application Support/Google/Chrome/NativeMessagingHosts/com.markcraft.host.json' : '.config/google-chrome/NativeMessagingHosts/com.markcraft.host.json');
-await cp(hostManifest, path.join(profile, 'NativeMessagingHosts/com.markcraft.host.json')).catch(() => {});
+
 const ctx = await chromium.launchPersistentContext(profile, {
   headless: !process.env.HEADED,
   executablePath: process.env.CH || chromium.executablePath(),
@@ -296,14 +294,6 @@ const exported = await page.evaluate(async () => {
 });
 check('annotations baked into exports', exported >= 2, String(exported));
 
-// Save via native host if installed, else skip
-const host = await page.evaluate(() => window.__markcraft.native.ping(true));
-if (host) {
-  await page.keyboard.press('ControlOrMeta+s');
-  await page.waitForTimeout(800);
-  check('save writes file (native host)', (await readFile(sample, 'utf8')).includes('## Typed heading'));
-} else console.log('- native host not installed; skipping save test');
-
 // Navigate via relative link
 await page.click('#doc a[href*="other.md"]');
 await page.waitForSelector('#doc h1:text("Other document")', { timeout: 5000 }).catch(() => {});
@@ -332,6 +322,64 @@ await page.waitForTimeout(300);
 check('layout setting applies', await page.evaluate(() => document.body.classList.contains('layout-full')));
 await page.click('.st-body .segment[data-key="layout"] [data-v="centered"]');
 await page.click('.st-close');
+
+// Built-in agent against a local mock provider speaking both API formats.
+const seen = [];
+const mock = http.createServer((req, res) => {
+  let body = '';
+  req.on('data', (c) => (body += c));
+  req.on('end', () => {
+    const j = JSON.parse(body || '{}');
+    seen.push({ url: req.url, auth: req.headers.authorization, key: req.headers['x-api-key'], version: req.headers['anthropic-version'], model: j.model });
+    const user = j.messages?.find((m) => m.role === 'user')?.content || '';
+    const tag = /<(document-[0-9a-f]+)>/.exec(user)?.[1];
+    const doc = user.slice(user.indexOf(`<${tag}>`) + tag.length + 3, user.lastIndexOf(`</${tag}>`) - 1);
+    const reply = `<${tag}>\n${doc}\n\nA line added by the agent.\n</${tag}>\n<summary>Edited the final paragraph.</summary>`;
+    const chunks = reply.match(/[\s\S]{1,40}/g);
+    res.writeHead(200, { 'content-type': 'text/event-stream', 'access-control-allow-origin': '*' });
+    const send = (ev, data) => res.write(`${ev ? `event: ${ev}\n` : ''}data: ${JSON.stringify(data)}\n\n`);
+    if (req.url === '/v1/messages') {
+      send('message_start', { type: 'message_start', message: { id: 'msg_1', type: 'message', role: 'assistant', model: j.model, content: [], stop_reason: null, stop_sequence: null, usage: { input_tokens: 1, output_tokens: 0 } } });
+      send('content_block_start', { type: 'content_block_start', index: 0, content_block: { type: 'text', text: '' } });
+      for (const c of chunks) send('content_block_delta', { type: 'content_block_delta', index: 0, delta: { type: 'text_delta', text: c } });
+      send('content_block_stop', { type: 'content_block_stop', index: 0 });
+      send('message_delta', { type: 'message_delta', delta: { stop_reason: 'end_turn', stop_sequence: null }, usage: { output_tokens: chunks.length } });
+      send('message_stop', { type: 'message_stop' });
+    } else {
+      for (const c of chunks) send('', { choices: [{ index: 0, delta: { content: c }, finish_reason: null }] });
+      send('', { choices: [{ index: 0, delta: {}, finish_reason: 'stop' }] });
+      res.write('data: [DONE]\n\n');
+    }
+    res.end();
+  });
+}).listen(0, '127.0.0.1');
+await new Promise((r) => mock.once('listening', r));
+const mockUrl = `http://127.0.0.1:${mock.address().port}`;
+
+await page.evaluate(() => localStorage.removeItem('mc-llm-provider'));
+await page.click('[data-ptab="agent"]');
+await page.waitForTimeout(300);
+const noProvider = await page.evaluate(() => ({ notice: !document.querySelector('#agent-host').hidden && !!document.querySelector('[data-act="agent-config"]'), disabled: document.querySelector('[data-act="agent-run"]').disabled }));
+check('built-in agent needs a provider', noProvider.notice && noProvider.disabled, JSON.stringify(noProvider));
+const urlChecks = await page.evaluate(() => { const l = window.__markcraft.llm; return [l.checkBaseUrl('http://example.com/v1'), l.checkBaseUrl('https://u:p@example.com'), l.checkBaseUrl('http://localhost:11434/v1'), l.checkBaseUrl('https://api.openai.com/v1')]; });
+check('provider URL must be https (http only for localhost)', !!urlChecks[0] && !!urlChecks[1] && urlChecks[2] === null && urlChecks[3] === null, JSON.stringify(urlChecks));
+
+for (const [format, base] of [['openai', `${mockUrl}/v1`], ['anthropic', mockUrl]]) {
+  await page.evaluate(([format, baseUrl]) => window.__markcraft.llm.setProvider({ format, baseUrl, model: `mock-${format}`, apiKey: 'test-key-123' }), [format, base]);
+  await page.click('[data-ptab="outline"]');
+  await page.click('[data-ptab="agent"]');
+  await page.waitForTimeout(200);
+  await page.fill('#agent-prompt', 'Make the final paragraph clearer');
+  await page.click('[data-act="agent-run"]');
+  await page.waitForSelector('#agent-result:not([hidden]) .diff', { timeout: 8000 }).catch(() => {});
+  const r = await page.evaluate(() => ({ diff: document.querySelector('#agent-result .diff')?.textContent || '', status: document.querySelector('#agent-status').textContent, log: document.querySelector('#agent-log').textContent }));
+  const req = seen.at(-1) || {};
+  const authOk = format === 'openai' ? req.auth === 'Bearer test-key-123' : req.key === 'test-key-123' && !!req.version;
+  check(`built-in agent (${format} format) proposes a diff`, r.diff.includes('A line added by the agent.') && authOk && req.model === `mock-${format}`, JSON.stringify({ status: r.status, log: r.log.slice(0, 120), req }));
+  await page.click('#agent-result [data-act="discard"]').catch(() => {});
+}
+await page.evaluate(() => localStorage.removeItem('mc-llm-provider'));
+mock.close();
 
 // Chinese UI
 const p3 = await ctx.newPage();

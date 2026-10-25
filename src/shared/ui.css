@@ -137,7 +137,7 @@ kbd.combo { font-size: 12px; padding: 4px 9px; min-width: 60px; text-align: cent
 kbd.combo.rec { color: var(--accent); border-color: var(--accent); animation: pulse 1s infinite; }
 @keyframes pulse { 50% { box-shadow: 0 0 0 4px var(--accent-soft); } }
 .st-foot { display: flex; justify-content: flex-end; margin-top: 4px; }
-.host-status.ok { color: var(--ok); }
+.host-status.ok, .ai-status.ok { color: var(--ok); }
 .ext-id { font: 11px var(--mono); color: var(--ui-faint); }
 .st-close { position: absolute; top: 14px; right: 14px; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; border: 0; border-radius: 8px; background: none; color: var(--ui-muted); cursor: pointer; }
 .st-close:hover { background: var(--ui-hover); color: var(--ui-fg); }

@@ -70,8 +70,6 @@ export const DEFAULTS = {
   // Files
   excludeFoldersOn: true,
   excludeFolders: ['node_modules', '.git', 'dist', 'build', '__pycache__'],
-  // Agent
-  agentCli: 'claude', // claude | codex
   // Shortcuts (action -> combo); empty means the default from SHORTCUTS
   shortcuts: {},
 };

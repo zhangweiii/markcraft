@@ -1,0 +1,249 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Privacy Policy — MarkCraft</title>
+<meta name="description" content="MarkCraft privacy policy: no accounts, no analytics, no telemetry. What is stored locally, which network requests the extension can make, and how to delete your data.">
+<link rel="canonical" href="https://markcraft.cc/privacy.html">
+<link rel="icon" href="assets/logo.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="assets/icon-128.png">
+<meta name="theme-color" content="#5b5bd6">
+<link rel="stylesheet" href="style.css">
+<script>
+  try {
+    const t = localStorage.getItem('mc-theme');
+    if (t) document.documentElement.dataset.theme = t;
+    const l = localStorage.getItem('mc-lang');
+    if (l === 'zh') document.documentElement.lang = 'zh-CN';
+    if (l) document.documentElement.dataset.lang = l;
+  } catch {}
+</script>
+<style>
+  .legal { max-width: 780px; margin: 0 auto; padding: 56px 0 72px; }
+  .legal .eyebrow { font: 600 13px/1 var(--mono); letter-spacing: .04em; color: var(--accent); margin-bottom: 14px; }
+  .legal h1 { font-size: clamp(30px, 4vw, 42px); margin-bottom: 10px; }
+  .legal .updated { color: var(--faint); font-size: 14.5px; margin-bottom: 8px; }
+  .legal .lede { color: var(--muted); font-size: 17.5px; line-height: 1.6; margin: 18px 0 8px; }
+  .legal h2 { font-size: 20px; margin: 40px 0 10px; padding-top: 22px; border-top: 1px solid var(--border); }
+  .legal h3 { font-size: 16px; margin: 22px 0 6px; }
+  .legal p, .legal li { color: var(--muted); font-size: 15.5px; line-height: 1.72; }
+  .legal p { margin: 0 0 12px; }
+  .legal ul { margin: 0 0 14px; padding-left: 22px; }
+  .legal li { margin-bottom: 7px; }
+  .legal li::marker { color: var(--faint); }
+  .legal strong { color: var(--fg); font-weight: 600; }
+  .legal a { color: var(--accent); text-decoration: underline; text-underline-offset: 2px; }
+  .legal .callout { background: var(--panel); border: 1px solid var(--border); border-radius: var(--radius);
+                    padding: 16px 18px; margin: 18px 0; box-shadow: var(--shadow); }
+  .legal .callout p:last-child { margin-bottom: 0; }
+  .legal table { width: 100%; border-collapse: collapse; margin: 8px 0 16px; font-size: 15px; }
+  .legal th, .legal td { text-align: left; padding: 9px 10px; border-bottom: 1px solid var(--border); color: var(--muted); vertical-align: top; }
+  .legal th { color: var(--fg); font-weight: 600; font-size: 14px; }
+  .legal code { font-size: .88em; }
+  .legal-nav { display: flex; align-items: center; gap: 10px; }
+  .legal-nav .spacer { margin-left: auto; }
+  html[data-lang='zh'] [data-only='en'], html:not([data-lang='zh']) [data-only='zh'] { display: none; }
+</style>
+</head>
+<body>
+
+<header class="nav">
+  <div class="wrap nav-inner">
+    <a class="brand" href="./" aria-label="MarkCraft home"><img src="assets/logo.svg" width="28" height="28" alt=""><span>MarkCraft</span></a>
+    <nav class="nav-links" aria-label="Primary">
+      <a href="./"><span data-only="en">Home</span><span data-only="zh">首页</span></a>
+      <a href="https://github.com/zhangweiii/markcraft">GitHub</a>
+    </nav>
+    <div class="nav-actions legal-nav">
+      <button class="icon-btn" id="lang-toggle" type="button" aria-label="Switch language" title="中文 / English">
+        <span id="lang-label">中文</span>
+      </button>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <article class="legal">
+
+    <!-- ============================== English ============================== -->
+    <div data-only="en">
+      <p class="eyebrow">Legal</p>
+      <h1>Privacy Policy</h1>
+      <p class="updated">Last updated: 25 October 2026 · Applies to the MarkCraft Chrome extension and to markcraft.cc</p>
+      <p class="lede">MarkCraft is a local Markdown viewer, editor and review tool. It has no accounts, no analytics, no telemetry and no advertising. Your documents are rendered on your own machine and are never uploaded to us.</p>
+
+      <div class="callout">
+        <p><strong>The short version.</strong> We do not collect, store, sell or share personal data. Everything MarkCraft remembers stays in your browser's local storage on your device. Document content only leaves your computer through features you set up and trigger yourself: the AI agent (sent to the AI provider you configure) and PlantUML rendering (off by default, requires your explicit consent).</p>
+      </div>
+
+      <h2>1. What we do not do</h2>
+      <ul>
+        <li>No accounts, sign-ups, logins or user profiles.</li>
+        <li>No analytics, crash reporting, telemetry, session recording or A/B testing.</li>
+        <li>No advertising, tracking pixels, cookies for advertising, or fingerprinting.</li>
+        <li>No selling, renting or sharing of data with data brokers or advertisers.</li>
+        <li>No remote code: all JavaScript, WebAssembly and styles are bundled inside the extension package.</li>
+      </ul>
+
+      <h2>2. Data stored on your device</h2>
+      <p>MarkCraft uses the browser's extension storage (<code>chrome.storage</code> and IndexedDB) to remember things between sessions. We never receive any of it. Your settings are kept in <code>chrome.storage.sync</code>, so if you are signed in to Chrome with sync turned on, Chrome copies them between your own devices through your Google account. Documents, cached copies and annotations stay local and are not synced.</p>
+      <table>
+        <tr><th>What</th><th>Why</th></tr>
+        <tr><td>Settings</td><td>Theme, layout, enabled plugins, presentation style, custom shortcuts, PlantUML consent.</td></tr>
+        <tr><td>Recent documents &amp; bookmarks</td><td>So you can reopen a file from the toolbar popup or the folder browser.</td></tr>
+        <tr><td>Cached document copies</td><td>Instant reopening and change detection ("live reload") for files opened from disk or the web.</td></tr>
+        <tr><td>Annotations</td><td>Highlights, underlines and comments you add, so they survive a reload and appear in exports.</td></tr>
+        <tr><td>AI provider</td><td>The API format, base URL, model and API key you enter for the AI agent. Kept in the extension's own local storage on this device only: never synced, never included in settings exports, not readable by web pages, and removed with <em>Remove</em> in Settings → AI Provider.</td></tr>
+      </table>
+      <p>You can erase it inside the extension under <strong>Settings → Import / Export</strong>: <em>Clear Cache</em> removes cached file handles, recent documents and folder bookmarks, <em>Delete all annotations</em> removes highlights and comments, and <em>Reset to Defaults</em> restores your settings. Uninstalling the extension removes all of its local data at once.</p>
+
+      <h2>3. Network requests the extension can make</h2>
+      <p>MarkCraft works fully offline. The following requests only happen in the situations described, and they always go to the server you chose to open content from — never to us.</p>
+      <ul>
+        <li><strong>Documents you open by URL.</strong> If you open a Markdown file from a web address (for example a raw file on GitHub), the extension requests that URL. The request goes to that server, which may log it as any normal web request.</li>
+        <li><strong>Images and links inside a document.</strong> Images referenced by your Markdown are loaded from their original host when the document is displayed. Clicking an external link opens it in a normal browser tab.</li>
+        <li><strong>PlantUML diagrams — optional, off by default.</strong> If you enable PlantUML rendering and explicitly grant consent, the source of <code>```plantuml</code> code blocks is sent to the PlantUML server you configure (by default the community server at <code>plantuml.com</code>) in order to receive an SVG. Nothing is sent before you consent, and you can revoke consent or point the setting at a self-hosted server at any time.</li>
+        <li><strong>AI agent — only after you configure a provider.</strong> When you run the agent, the current document, its file name and your instructions are sent to the AI provider you configured in Settings → AI Provider (for example OpenAI, Anthropic, or a server on your own machine such as Ollama), together with your API key so the provider can authenticate you. The provider processes them under the account and terms you have with it. Nothing is sent until you configure a provider and press Run, only <code>https://</code> endpoints are accepted (plain <code>http://</code> only for <code>localhost</code>), and the provider's reply is shown as a diff that is applied only if you accept it.</li>
+        <li><strong>HTML files you export.</strong> An exported HTML file references a KaTeX stylesheet on <code>cdn.jsdelivr.net</code> so that math renders when the file is opened in a browser. That request is made by the exported file, not by the extension, and only when you open that file.</li>
+      </ul>
+      <p>We operate no servers that receive your data. We have no ability to see your documents, your settings or your usage.</p>
+
+      <h2>4. Saving files</h2>
+      <p>MarkCraft saves with Chrome's built-in File System Access API. It can only write to files and folders you pick in Chrome's own file dialog, and Chrome asks for your permission. MarkCraft does not install or talk to any program outside the browser.</p>
+
+      <h2>5. Permissions and why they are needed</h2>
+      <table>
+        <tr><th>Permission</th><th>Reason</th></tr>
+        <tr><td><code>storage</code>, <code>unlimitedStorage</code></td><td>Persist settings, annotations and cached copies of large documents locally.</td></tr>
+        <tr><td>Access to all sites</td><td>A content script must run when a page loads to detect raw Markdown (for example a <code>.md</code> URL served as <code>text/plain</code>) and replace it with a reading view. It only inspects the current document to decide whether it is Markdown.</td></tr>
+        <tr><td><code>file://</code> access</td><td>Opening local Markdown files is the main use case. This must be enabled by you in Chrome's extension settings.</td></tr>
+        <tr><td><code>contextMenus</code></td><td>Adds three right-click menu entries: "Open link in MarkCraft", "Render this page as Markdown" and "New Markdown document from selection".</td></tr>
+        <tr><td><code>clipboardWrite</code></td><td>Copies rendered content as rich text or Markdown when you click Copy.</td></tr>
+      </table>
+
+      <h2>6. Sharing and third parties</h2>
+      <p>We share nothing, because we receive nothing. Data you send to an AI provider or PlantUML server goes directly from your browser to that service; we are not in the middle. The extension contains no third-party analytics, advertising or tracking SDKs. The open-source libraries it bundles (marked, highlight.js, KaTeX, Mermaid, Viz.js, WaveDrom, Milkdown, markmap, docx, DOMPurify, jsdiff, Lucide) run entirely inside the extension and do not report back to their authors.</p>
+      <p>If you enable PlantUML, the diagram source you write is disclosed to the diagram server you configured — that is a transmission you initiate and control. Choose a self-hosted server if your diagrams are confidential.</p>
+
+      <h2>7. Your rights</h2>
+      <p>Because we do not hold any of your data, there is nothing for us to export, correct or delete on our side. Data on your device is under your control: clear it in the extension's settings or uninstall the extension. If you believe we hold data about you, contact us and we will confirm that we do not.</p>
+
+      <h2>8. Children</h2>
+      <p>MarkCraft is a developer and writing tool. It is not directed at children and we do not knowingly collect information from anyone, including children under 13.</p>
+
+      <h2>9. Changes to this policy</h2>
+      <p>If a future version of MarkCraft starts handling data differently — for example a new optional network feature — this page will be updated and the "last updated" date above will change before that version is released. Material changes will also be noted in the release notes.</p>
+
+      <h2>10. Contact</h2>
+      <p>Questions about this policy or about privacy in MarkCraft: open an issue at <a href="https://github.com/zhangweiii/markcraft/issues" target="_blank" rel="noopener">github.com/zhangweiii/markcraft/issues</a>.</p>
+    </div>
+
+    <!-- ============================== 中文 ============================== -->
+    <div data-only="zh" lang="zh-CN">
+      <p class="eyebrow">法律</p>
+      <h1>隐私政策</h1>
+      <p class="updated">最后更新：2026 年 10 月 25 日 · 适用于 MarkCraft Chrome 扩展及 markcraft.cc</p>
+      <p class="lede">MarkCraft 是一个完全在本地运行的 Markdown 阅读、编辑与批注工具。它没有账号体系，没有统计分析，没有遥测，也没有广告。你的文档只在你自己的电脑上渲染，从不会上传给我们。</p>
+
+      <div class="callout">
+        <p><strong>一句话版本。</strong>我们不收集、不存储、不出售、不共享任何个人数据。MarkCraft 记住的所有内容都保存在你设备上浏览器的本地存储里。文档内容只会通过你自己配置并主动触发的功能离开你的电脑：AI 智能体（发送给你配置的 AI 服务商）和 PlantUML 渲染（默认关闭，需要你明确同意）。</p>
+      </div>
+
+      <h2>1. 我们不做的事</h2>
+      <ul>
+        <li>没有账号、注册、登录，也没有用户画像。</li>
+        <li>没有统计分析、崩溃上报、遥测、会话录制或 A/B 测试。</li>
+        <li>没有广告、追踪像素、广告 Cookie，也不做指纹识别。</li>
+        <li>不向数据经纪商或广告商出售、出租、共享任何数据。</li>
+        <li>没有远程代码：所有 JavaScript、WebAssembly 和样式都打包在扩展内部。</li>
+      </ul>
+
+      <h2>2. 保存在你设备上的数据</h2>
+      <p>MarkCraft 使用浏览器的扩展存储（<code>chrome.storage</code> 与 IndexedDB）在会话之间记住一些内容，我们不会收到其中任何数据。设置保存在 <code>chrome.storage.sync</code> 中：如果你登录了 Chrome 并开启了同步，Chrome 会通过你的 Google 账号在你自己的设备之间同步这些设置。文档、缓存副本和批注只保存在本地，不会同步。</p>
+      <table>
+        <tr><th>内容</th><th>用途</th></tr>
+        <tr><td>设置</td><td>主题、版式、启用的插件、演示样式、自定义快捷键、PlantUML 授权状态。</td></tr>
+        <tr><td>最近文档与书签</td><td>方便你从工具栏弹窗或文件夹浏览器重新打开文件。</td></tr>
+        <tr><td>文档缓存副本</td><td>立即重新打开、以及检测文件变化（自动刷新）。</td></tr>
+        <tr><td>批注</td><td>你添加的高亮、下划线和评论，刷新后仍保留，并会出现在导出内容里。</td></tr>
+        <tr><td>AI 服务商</td><td>你为 AI 智能体填写的 API 格式、Base URL、模型和 API Key。只保存在本设备上扩展自己的本地存储中：不会同步，不会包含在设置导出中，网页无法读取，可在设置 → AI 服务商中点击「移除」删除。</td></tr>
+      </table>
+      <p>你可以在扩展的<strong>设置 → 导入 / 导出</strong>中清除这些数据：「清除缓存」删除缓存的文件句柄、最近文档和文件夹书签，「删除所有标注」删除高亮和评论，「恢复默认」重置设置。卸载扩展会一次性删除它的全部本地数据。</p>
+
+      <h2>3. 扩展可能发起的网络请求</h2>
+      <p>MarkCraft 完全可以离线使用。下列请求只在描述的情形下发生，并且只会请求你自己选择打开的内容所在的服务器——永远不会请求我们的服务器。</p>
+      <ul>
+        <li><strong>你通过网址打开的文档。</strong>如果你打开的是网络上的 Markdown 文件（例如 GitHub 上的原始文件），扩展会请求该网址。请求发往该服务器，对方可能像记录普通网页请求一样记录它。</li>
+        <li><strong>文档中引用的图片与链接。</strong>显示文档时，Markdown 里引用的图片会从它原本所在的服务器加载；点击外部链接会在普通标签页中打开。</li>
+        <li><strong>PlantUML 图表——可选，默认关闭。</strong>只有当你启用 PlantUML 渲染并明确同意后，<code>```plantuml</code> 代码块的源码才会发送到你配置的 PlantUML 服务器（默认为社区服务 <code>plantuml.com</code>）以获取 SVG。在你同意之前不会发送任何内容，你也可以随时撤销同意或改指向自建服务器。</li>
+        <li><strong>AI 智能体——仅在你配置服务商之后。</strong>当你运行智能体时，当前文档、文件名和你的指令会发送给你在设置 → AI 服务商中配置的服务商（例如 OpenAI、Anthropic，或你本机上的 Ollama 等服务），同时附带你的 API Key 以便服务商验证身份。服务商按照你与它之间的账号和条款处理这些内容。在你配置服务商并点击运行之前不会发送任何内容；只接受 <code>https://</code> 地址（只有 <code>localhost</code> 允许 <code>http://</code>）；服务商的回复会以差异的形式展示，只有你接受后才会应用。</li>
+        <li><strong>你导出的 HTML 文件。</strong>导出的 HTML 引用了 <code>cdn.jsdelivr.net</code> 上的 KaTeX 样式表，以便在浏览器中打开时公式能正常显示。这个请求由导出文件发起，而不是扩展发起，且只在你打开该文件时发生。</li>
+      </ul>
+      <p>我们不运营任何接收你数据的服务器，也没有能力看到你的文档、设置或使用情况。</p>
+
+      <h2>4. 保存文件</h2>
+      <p>MarkCraft 使用 Chrome 内置的 File System Access API 保存文件。它只能写入你在 Chrome 自带的文件对话框中选择的文件或文件夹，并且由 Chrome 向你申请权限。MarkCraft 不会安装、也不会连接浏览器之外的任何程序。</p>
+
+      <h2>5. 权限及用途</h2>
+      <table>
+        <tr><th>权限</th><th>原因</th></tr>
+        <tr><td><code>storage</code>、<code>unlimitedStorage</code></td><td>在本地保存设置、批注以及大文档的缓存副本。</td></tr>
+        <tr><td>访问所有网站</td><td>页面加载时需要运行内容脚本来判断是否为原始 Markdown（例如以 <code>text/plain</code> 提供的 <code>.md</code> 网址），并替换成阅读视图。该脚本只检查当前文档是否为 Markdown。</td></tr>
+        <tr><td><code>file://</code> 访问</td><td>打开本地 Markdown 文件是主要用途。此权限需要你在 Chrome 的扩展设置中手动开启。</td></tr>
+        <tr><td><code>contextMenus</code></td><td>添加三个右键菜单项：「用 MarkCraft 打开链接」「将此页面渲染为 Markdown」「用选中文本新建 Markdown 文档」。</td></tr>
+        <tr><td><code>clipboardWrite</code></td><td>点击复制时把渲染内容复制为富文本或 Markdown。</td></tr>
+      </table>
+
+      <h2>6. 共享与第三方</h2>
+      <p>我们不共享任何数据，因为我们根本没有收到数据。你发给 AI 服务商或 PlantUML 服务器的数据直接从你的浏览器发往该服务，中间不经过我们。扩展中不包含任何第三方统计分析、广告或追踪 SDK。它打包的开源库（marked、highlight.js、KaTeX、Mermaid、Viz.js、WaveDrom、Milkdown、markmap、docx、DOMPurify、jsdiff、Lucide）全部在扩展内部运行，不会向作者回传信息。</p>
+      <p>如果你启用 PlantUML，你编写的图表源码会被发送给你配置的图表服务器——这是由你发起并控制的传输。如果图表内容涉密，请改用自建服务器。</p>
+
+      <h2>7. 你的权利</h2>
+      <p>由于我们不持有你的任何数据，我们这边没有可供导出、更正或删除的内容。你设备上的数据完全由你掌控：在扩展设置中清除，或卸载扩展。如果你认为我们持有你的数据，请联系我们，我们会确认事实并非如此。</p>
+
+      <h2>8. 儿童</h2>
+      <p>MarkCraft 是一款面向开发者和写作者的工具，并非面向儿童，我们不会有意收集任何人的信息，包括 13 岁以下的儿童。</p>
+
+      <h2>9. 政策变更</h2>
+      <p>如果未来的 MarkCraft 版本以不同方式处理数据（例如新增可选的网络功能），本页面会在该版本发布前更新，上面的「最后更新」日期也会随之改变。重大变化还会在版本发布说明中注明。</p>
+
+      <h2>10. 联系方式</h2>
+      <p>关于本政策或 MarkCraft 隐私问题，请在 <a href="https://github.com/zhangweiii/markcraft/issues" target="_blank" rel="noopener">github.com/zhangweiii/markcraft/issues</a> 提交 issue。</p>
+    </div>
+
+  </article>
+</main>
+
+<footer class="footer">
+  <div class="wrap footer-inner">
+    <span class="brand small"><img src="assets/logo.svg" width="20" height="20" alt="">MarkCraft</span>
+    <nav aria-label="Footer">
+      <a href="./">Home</a>
+      <a href="https://github.com/zhangweiii/markcraft">GitHub</a>
+      <a href="https://github.com/zhangweiii/markcraft/blob/main/LICENSE">MIT License</a>
+    </nav>
+    <span class="muted">© <span id="year">2026</span> MarkCraft contributors</span>
+  </div>
+</footer>
+
+<script>
+  const root = document.documentElement;
+  const btn = document.getElementById('lang-toggle');
+  const label = document.getElementById('lang-label');
+  const apply = (lang) => {
+    root.dataset.lang = lang;
+    root.lang = lang === 'zh' ? 'zh-CN' : 'en';
+    label.textContent = lang === 'zh' ? 'EN' : '中文';
+    document.title = lang === 'zh' ? '隐私政策 — MarkCraft' : 'Privacy Policy — MarkCraft';
+  };
+  apply(root.dataset.lang === 'zh' ? 'zh' : 'en');
+  btn.addEventListener('click', () => {
+    const next = root.dataset.lang === 'zh' ? 'en' : 'zh';
+    try { localStorage.setItem('mc-lang', next); } catch {}
+    apply(next);
+  });
+  document.getElementById('year').textContent = new Date().getFullYear();
+</script>
+</body>
+</html>
