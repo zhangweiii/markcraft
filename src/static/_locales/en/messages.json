@@ -3,7 +3,7 @@
     "message": "MarkCraft – Markdown Viewer & Editor"
   },
   "description": {
-    "message": "Render, edit, review and present Markdown: GFM, diagrams, math, TOC, live reload with diffs, WYSIWYG editing, annotations, Word/HTML/PDF export and AI agent hand-off."
+    "message": "Read, edit, review and present Markdown: diagrams, math, WYSIWYG editing, annotations, slides, Word/HTML/PDF export, AI agent."
   },
   "cmdOpen": {
     "message": "Open a Markdown file in MarkCraft"
