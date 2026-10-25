@@ -5,22 +5,22 @@
 :root[data-theme='light'],
 .present[data-theme='light'] {
   --bg: #ffffff;
-  --fg: #1f2328;
-  --muted: #59636e;
-  --border: #d1d9e0;
-  --border-soft: #e5e9ee;
+  --fg: #24292f;
+  --muted: #636c76;
+  --border: #dfe3e8;
+  --border-soft: #e8ebef;
   --code-bg: #f6f8fa;
   --inline-code-bg: rgba(129, 139, 152, 0.14);
-  --link: #0969da;
+  --link: #4a5bd4;
   --mark: #fff8c5;
   --quote: #59636e;
   --table-stripe: #f6f8fa;
-  --md-accent: #0969da;
-  --note: #0969da;
-  --tip: #1a7f37;
-  --important: #8250df;
-  --warning: #9a6700;
-  --caution: #d1242f;
+  --md-accent: #4a5bd4;
+  --note: #4a5bd4;
+  --tip: #0f8a5f;
+  --important: #7a4fc4;
+  --warning: #a86b00;
+  --caution: #d03a3a;
   --hl-keyword: #cf222e;
   --hl-string: #0a3069;
   --hl-title: #8250df;
@@ -33,32 +33,34 @@
   --hl-del-bg: #ffebe9;
   --hl-del: #82071e;
   --content-font: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', 'Noto Sans', Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji';
-  --content-line: 1.7;
+  --content-line: 1.6;
   --mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
   --content-size: 16px;
-  --content-width: 860px;
+  --content-width: 1000px;
+  --inline-code-fg: #5054c4;
+  --table-head: #f6f8fa;
 }
 
 :root[data-theme='dark'],
 .present[data-theme='dark'],
 .present[data-theme='night'] {
   --bg: #0d1117;
-  --fg: #e6edf3;
-  --muted: #9198a1;
-  --border: #3d444d;
-  --border-soft: #2a3038;
-  --code-bg: #151b23;
+  --fg: #c9d1d9;
+  --muted: #8b949e;
+  --border: #30363d;
+  --border-soft: #262c34;
+  --code-bg: #161b22;
   --inline-code-bg: rgba(101, 108, 118, 0.25);
-  --link: #4493f8;
+  --link: #8d9cf5;
   --mark: rgba(187, 128, 9, 0.35);
   --quote: #9198a1;
   --table-stripe: #151b23;
-  --md-accent: #4493f8;
-  --note: #4493f8;
-  --tip: #3fb950;
-  --important: #ab7df8;
-  --warning: #d29922;
-  --caution: #f85149;
+  --md-accent: #8d9cf5;
+  --note: #8d9cf5;
+  --tip: #3ecf8e;
+  --important: #ac8cf5;
+  --warning: #e8b93c;
+  --caution: #f47c7c;
   --hl-keyword: #ff7b72;
   --hl-string: #a5d6ff;
   --hl-title: #d2a8ff;
@@ -70,6 +72,8 @@
   --hl-add: #aff5b4;
   --hl-del-bg: rgba(248, 81, 73, 0.15);
   --hl-del: #ffdcd7;
+  --inline-code-fg: #a3adf7;
+  --table-head: #161b22;
 }
 
 :root[data-theme='sepia'],
@@ -93,9 +97,11 @@
   --hl-comment: #9a8a72;
   --hl-attr: #1f5f8b;
   --hl-built: #a05a00;
+  --inline-code-fg: #8a3f10;
+  --table-head: #f0e6d2;
 }
 
-.present[data-theme='night'] { --bg: #111827; --fg: #f3f4f6; --link: #fbbf24; --md-accent: #fbbf24; --code-bg: #1f2937; --border-soft: #374151; }
+.present[data-theme='night'] { --bg: #111827; --fg: #f3f4f6; --inline-code-fg: #fcd34d; --link: #fbbf24; --md-accent: #fbbf24; --code-bg: #1f2937; --border-soft: #374151; }
 
 :root[data-font='sans'] { --content-font: 'Helvetica Neue', Helvetica, Arial, 'PingFang SC', 'Microsoft YaHei', sans-serif; }
 :root[data-font='serif'] { --content-font: 'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia, 'Songti SC', 'Noto Serif CJK SC', 'Noto Serif', serif; }
@@ -122,15 +128,16 @@
 }
 
 .markdown-body h1, .markdown-body h2, .markdown-body h3, .markdown-body h4, .markdown-body h5, .markdown-body h6 {
-  margin: 1.6em 0 0.7em;
+  margin: 1.6em 0 0.8em;
   font-weight: 600;
   line-height: 1.25;
+  letter-spacing: -0.01em;
   scroll-margin-top: 16px;
 }
 .markdown-body h1 { font-size: 2em; padding-bottom: 0.3em; border-bottom: 1px solid var(--border-soft); }
 .markdown-body h2 { font-size: 1.5em; padding-bottom: 0.3em; border-bottom: 1px solid var(--border-soft); }
 .markdown-body h3 { font-size: 1.25em; }
-.markdown-body h4 { font-size: 1em; }
+.markdown-body h4 { font-size: 1.1em; }
 .markdown-body h5 { font-size: 0.875em; }
 .markdown-body h6 { font-size: 0.85em; color: var(--muted); }
 .markdown-body h1.flash, .markdown-body h2.flash, .markdown-body h3.flash,
@@ -169,19 +176,19 @@
 
 .markdown-body code, .markdown-body tt {
   padding: 0.2em 0.4em; margin: 0; font-size: 85%; font-family: var(--mono);
-  white-space: break-spaces; background: var(--inline-code-bg); border-radius: 6px;
+  white-space: break-spaces; background: var(--inline-code-bg); border-radius: 5px; color: var(--inline-code-fg, inherit);
 }
 .markdown-body pre {
   position: relative; padding: 16px; overflow: auto; font-size: 85%; line-height: 1.45;
-  background: var(--code-bg); border-radius: 8px; border: 1px solid var(--border-soft);
+  background: var(--code-bg); border-radius: 8px;
 }
-.markdown-body pre code { padding: 0; margin: 0; font-size: 100%; white-space: pre; background: transparent; border: 0; word-break: normal; display: block; }
+.markdown-body pre code { padding: 0; margin: 0; font-size: 100%; white-space: pre; background: transparent; border: 0; word-break: normal; display: block; color: inherit; }
 .markdown-body pre.with-line-numbers { display: flex; gap: 14px; }
 .markdown-body pre .line-numbers { user-select: none; color: var(--muted); text-align: right; white-space: pre; font-family: var(--mono); opacity: 0.6; }
 .markdown-body pre.with-line-numbers code { flex: 1; min-width: 0; }
 
 .markdown-body .table-wrap.wide { overflow-x: auto; }
-.markdown-body thead th { position: sticky; top: 0; z-index: 1; background: var(--bg); box-shadow: inset 0 -1px 0 var(--border); }
+.markdown-body thead th { position: sticky; top: 0; z-index: 1; background: var(--table-head, var(--bg)); box-shadow: inset 0 -1px 0 var(--border); }
 .markdown-body .table-wrap.wide thead th { position: static; }
 .markdown-body table { border-spacing: 0; border-collapse: collapse; width: max-content; max-width: 100%; }
 .markdown-body table th { font-weight: 600; }
@@ -211,9 +218,14 @@
 .markdown-body details.container > summary { cursor: pointer; }
 
 /* GitHub alerts */
-.markdown-body .markdown-alert { padding: 0.5em 1em; border-left: 0.25em solid var(--alert, var(--note)); }
+.markdown-body .markdown-alert {
+  padding: 0.65em 1em; border-radius: 8px;
+  border: 1px solid color-mix(in srgb, var(--alert, var(--note)) 30%, transparent);
+  background: color-mix(in srgb, var(--alert, var(--note)) 9%, transparent);
+}
 .markdown-body .markdown-alert > :last-child { margin-bottom: 0; }
-.markdown-body .markdown-alert-title { display: flex; align-items: center; gap: 0.5em; font-weight: 600; color: var(--alert, var(--note)); margin-bottom: 0.25em; }
+.markdown-body .markdown-alert-title { display: flex; align-items: center; gap: 0.45em; font-size: 0.85em; font-weight: 600; color: var(--alert, var(--note)); margin-bottom: 0.2em; }
+.markdown-body .markdown-alert-title svg { width: 14px; height: 14px; }
 .markdown-body .markdown-alert-title svg { fill: currentColor; }
 .markdown-body .markdown-alert-note { --alert: var(--note); }
 .markdown-body .markdown-alert-tip { --alert: var(--tip); }
@@ -232,8 +244,9 @@
 .markdown-body .math-block { overflow-x: auto; overflow-y: hidden; text-align: center; }
 .markdown-body .katex { font-size: 1.1em; }
 .markdown-body .math-error { color: var(--caution); }
-.markdown-body .diagram { position: relative; text-align: center; overflow-x: auto; }
+.markdown-body .diagram { position: relative; text-align: center; overflow-x: auto; margin: 1.5em 0; }
 .markdown-body .diagram svg { max-width: 100%; height: auto; }
+.markdown-body .mermaid-diagram svg * { filter: none !important; }
 .markdown-body .wavedrom-diagram svg { background: transparent; }
 .markdown-body .diagram-error-msg { color: var(--caution); font-size: 0.85em; text-align: left; margin-bottom: 0.5em; }
 .markdown-body .diagram-error-msg.notice-msg { color: var(--muted); }

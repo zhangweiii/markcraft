@@ -38,8 +38,8 @@ export const DEFAULTS = {
   // Appearance
   fontFamily: 'system',
   fontSize: 16,
-  lineHeight: 1.7,
-  contentWidth: 860,
+  lineHeight: 1.6,
+  contentWidth: 1000,
   layout: 'centered', // centered | full
   syntaxTheme: 'auto',
   codeWrap: 'scroll', // scroll | wrap

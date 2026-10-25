@@ -82,6 +82,7 @@ body.sidebar-closed #sidebar { display: none; }
   cursor: pointer; color: var(--ui-muted); white-space: nowrap; font-size: 13px; line-height: 1.35;
 }
 .toc-item:hover { background: var(--ui-hover); color: var(--ui-fg); }
+.toc-item:not(.lvl-0)::after { content: ''; position: absolute; top: 0; bottom: 0; left: calc(var(--lvl) * 14px - 1px); width: 1px; background: var(--ui-border); }
 .toc-item.active { color: var(--accent); background: var(--accent-soft); font-weight: 550; }
 .toc-item.active::before { content: ''; position: absolute; left: 0; top: 6px; bottom: 6px; width: 3px; border-radius: 2px; background: var(--accent); }
 .toc-item.lvl-0 { color: var(--ui-fg); font-weight: 600; }
