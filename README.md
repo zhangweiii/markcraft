@@ -22,11 +22,12 @@
 
 **Editing**
 - Read / WYSIWYG (Milkdown) / Source modes, Markdown paste, save (⌘S) back to the file
-- Optional native helper for direct saves to `file://` paths, an embedded terminal and AI agents
+- Saves straight back to the file with Chrome's File System Access API: files opened from a folder or the file picker save directly; a local `file://` page asks once for the file and remembers it
 
 **Review & AI**
 - Highlight (4 colors), underline and comment; annotations persist and appear in print and exports
-- Hand off review comments as a prompt, or run **Claude Code** / **Codex** on an isolated copy and review the diff before applying
+- Hand off review comments as a prompt, or ask the built-in agent to edit the document and review the diff before applying
+- The built-in agent uses the AI provider you configure in Settings → AI Provider (OpenAI-compatible or Anthropic API format, your own API key, stored only on this device); it is unavailable until one is set up
 
 **Present & export**
 - Presentation mode (themes, colors, background image, speaker notes, auto-play, touch)
@@ -46,12 +47,7 @@ npm run build        # outputs dist/
 
 1. Open `chrome://extensions`, enable **Developer mode**, click **Load unpacked** and pick `dist/`.
 2. In MarkCraft's **Details**, enable **Allow access to file URLs** for local files.
-3. Optional — native helper (Python 3, stdlib only) for direct saving, terminal and agents:
-   ```sh
-   ./native/install.sh            # or: ./native/install.sh <extension-id>
-   ```
-
-`npm run package` builds `markcraft.zip`. The `key` in `src/manifest.json` pins the extension id (`ollacgmpgcahkaknhhanopkaeimhckbn`) so the native helper can trust it; forks may remove it and pass their own id to `install.sh`.
+`npm run package` builds `markcraft.zip` for the Chrome Web Store and refuses to package private keys, source maps or local config files.
 
 ## Development
 
@@ -67,7 +63,6 @@ npm test                              # end-to-end tests (Playwright, test/fixtu
 | `src/viewer/` | the viewer app (rendering, editor, panels, exports, presentation, mind map) |
 | `src/shared/` | settings + schema-driven settings UI, IndexedDB, i18n, icons, design tokens |
 | `src/popup.js`, `src/options.js` | toolbar popup and options page |
-| `native/` | native messaging host (`com.markcraft.host`) and installer |
 | `scripts/test.mjs` | end-to-end test suite |
 | `site/` | website ([markcraft.cc](https://markcraft.cc)), deployed to GitHub Pages; `npm run screenshots` refreshes its images |
 

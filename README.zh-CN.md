@@ -18,20 +18,13 @@ npm run build          # 输出到 dist/
 1. 打开 `chrome://extensions`，开启右上角的 **开发者模式**。
 2. 点 **加载已解压的扩展程序**，选择 `dist/` 目录。
 3. 在 MarkCraft 的 **详情** 页里开启 **允许访问文件网址**（打开本地 `file://` 文件需要这一项）。
-4. （可选）安装本地助手，用来直接保存 `file://` 文件、运行 Agent 和终端：
-
-   ```sh
-   ./native/install.sh
-   ```
-
-   它会为 Chrome、Chrome for Testing、Chromium、Edge、Brave 和 Arc 注册 native messaging host `com.markcraft.host`。`manifest.json` 里的 `key` 固定了扩展 ID：`ollacgmpgcahkaknhhanopkaeimhckbn`。
 
 ## 界面
 
 采用“文档优先”布局：
 
 - **左侧**：文件浏览器。支持排序（名称 / 修改时间 / 大小）、.txt 筛选、按文件名过滤、展开 / 折叠全部、收藏和文件夹内搜索。
-- **右侧**：大纲、标注、Agent 和终端四个标签页。
+- **右侧**：大纲、标注和 Agent 三个标签页。
 - **右下角悬浮按钮**：操作面板 ⚡、编辑、布局（居中 / 全宽）、主题、文件栏、目录栏。
 - **字数统计**：底部居中的浮动胶囊，接近页尾时会自动隐藏。顶部有阅读进度条。
 
@@ -39,13 +32,14 @@ npm run build          # 输出到 dist/
 
 | 分组 | 内容 |
 |---|---|
-| 通用 | 语言、主题、打开模式、自动刷新及间隔、直接应用变更、.txt 渲染、远程 Markdown、排除文件夹、庆祝动画、默认 Agent |
+| 通用 | 语言、主题、打开模式、自动刷新及间隔、直接应用变更、.txt 渲染、远程 Markdown、排除文件夹、庆祝动画 |
 | 外观 | 字体、字号、行高、居中 / 全宽、最大宽度、文字方向、代码高亮主题（12 种）、代码换行、行号、阅读进度、字数统计及自动隐藏、表头吸顶、外链标识、元数据卡片、本地化提示块标题、换行方式、长名称换行、导出时附带目录 |
 | 插件 | Mintlify 组件（Card/Tabs/Steps/Accordion/CodeGroup/提示框等）、任务列表、高级表格、Front Matter、`==高亮==`、`++插入++`、`~下标~`、`^上标^`、排版美化、Emoji、脚注、定义列表、缩写、`:::` 容器、GitHub 提示块、KaTeX、Mermaid、Graphviz、WaveDrom、PlantUML |
 | 演示 | 字体、强调色、背景色、标题色、文字色、背景图片及透明度 |
 | PlantUML | 开关、服务器地址、发送数据前的同意 / 撤销 |
+| AI 服务商 | API 格式（OpenAI / Anthropic）、Base URL、模型、API Key（只保存在本设备）、测试连接、移除 |
 | 快捷键 | 21 个可自定义的快捷键：点“修改”后录制新组合键 |
-| 导入 / 导出 | 导出 / 导入设置 JSON、清除缓存、删除全部标注、恢复默认、本地助手状态 |
+| 导入 / 导出 | 导出 / 导入设置 JSON、清除缓存、删除全部标注、恢复默认 |
 
 ## 功能（按重要程度排列）
 
@@ -75,14 +69,13 @@ npm run build          # 输出到 dist/
 - 粘贴的 Markdown 会解析成富文本；在编辑器里，Mermaid 和数学代码块会实时预览。
 - 保存（⌘S）和另存为（⇧⌘S），并显示保存状态。
   - 通过“打开文件”或拖放打开的文件会直接写回。
-  - `file://` 文件：装了本地助手就直接写；否则第一次保存时选一次同一个文件，之后会记住。
+  - `file://` 文件：第一次保存时选一次同一个文件，之后会记住并直接写回。经常编辑的目录可以用“打开文件夹”，一次授权即可。
 - 有未保存修改时关闭页面会提醒；front matter 在所见即所得编辑时原样保留。
 
 ### 评审与 AI
 - 选中文字后会弹出工具条，可以用 4 种颜色高亮、加下划线或写评论（⌘⇧R）。评论按文档保存，并会带进打印、HTML 和 Word 导出。
 - 交接（⌘⇧Enter）：根据评审意见生成一段可编辑的提示词，可以复制，也可以直接发给 Agent。
-- Ask Agent：通过本地助手调用已安装的 **Claude Code**（`claude -p`）或 **Codex**（`codex exec`）。Agent 在隔离的副本上修改，你先审阅 +/− 差异，再选择“应用”或“应用并保存”。
-- 终端面板：在文档所在目录运行命令，支持 `cd`，Ctrl+C 中止。
+- 内置 Agent：在设置 → AI 服务商中配置服务商（OpenAI 兼容格式或 Anthropic 格式、你自己的 API Key，只保存在本设备）后才能使用；结果以差异形式展示，接受后才应用。
 
 ### 演示与导出
 - 幻灯片演示（⌥⌘P）：按 `---` 或 h1/h2 分页，支持 4 种主题、演讲者备注（`Note:` 或 `<!-- notes -->`）、全屏、触摸滑动和自动播放。
@@ -97,4 +90,4 @@ npm run watch                       # 增量构建
 CH="/path/to/Chrome for Testing" npm test   # 端到端测试（Playwright，用 test/fixtures 下的样例）
 ```
 
-源码结构：`src/detect.js` 是内容脚本，负责识别 Markdown 并跳转到查看器；`src/viewer/*` 是查看器应用；`src/shared/*` 放设置、IndexedDB 和 i18n；`native/` 是本地助手（Python 3，只用标准库）。
+源码结构：`src/detect.js` 是内容脚本，负责识别 Markdown 并跳转到查看器；`src/viewer/*` 是查看器应用；`src/shared/*` 放设置、IndexedDB、i18n 和 AI 服务商调用。

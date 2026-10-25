@@ -14,8 +14,9 @@
     "build": "node build.mjs",
     "watch": "node build.mjs --watch",
     "test": "node scripts/test.mjs",
-    "package": "node build.mjs && cd dist && zip -qr ../markcraft.zip . && cd .. && ls -la markcraft.zip",
-    "screenshots": "node build.mjs && node scripts/screenshots.mjs"
+    "package": "node build.mjs && node scripts/package.mjs",
+    "screenshots": "node build.mjs && node scripts/screenshots.mjs",
+    "store-assets": "node scripts/store-assets.mjs"
   },
   "keywords": [
     "markdown",
@@ -33,6 +34,7 @@
     "playwright": "^1.64.1"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "0.133.0",
     "@milkdown/crepe": "^7.22.3",
     "@milkdown/kit": "^7.22.3",
     "@viz-js/viz": "^3.31.0",

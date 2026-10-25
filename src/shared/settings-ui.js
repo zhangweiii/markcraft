@@ -3,6 +3,7 @@ import { DEFAULTS, PLUGIN_DEFAULTS, SHORTCUTS, getSettings, setSettings, resetSe
 import { db } from './db.js';
 import { icon } from './icons.js';
 import { t } from './i18n.js';
+import * as llm from './llm.js';
 
 const isMac = navigator.platform.includes('Mac');
 const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
@@ -59,9 +60,8 @@ const SECTIONS = [
         ['excludeFolders', 'list', '', '', { dep: 'excludeFoldersOn', placeholder: 'Add folder name...' }],
       ]],
       ['Updates', [['whatsNew', 'toggle', "What's New Notification", 'Show a one-time summary of new features and fixes when MarkCraft updates'], ['celebration', 'toggle', 'Celebration animation', 'Show confetti animation when you reach the end of a document']]],
-      ['Agent', [['agentCli', 'segment', 'Default agent', 'Used by Ask Agent (needs the native helper)', { options: { claude: 'Claude Code', codex: 'Codex' } }]]],
     ],
-    reset: ['enabled', 'whatsNew', 'language', 'theme', 'defaultMode', 'autoRefresh', 'pollInterval', 'autoAccept', 'renderTxt', 'interceptHttp', 'excludeFoldersOn', 'excludeFolders', 'celebration', 'agentCli'],
+    reset: ['enabled', 'whatsNew', 'language', 'theme', 'defaultMode', 'autoRefresh', 'pollInterval', 'autoAccept', 'renderTxt', 'interceptHttp', 'excludeFoldersOn', 'excludeFolders', 'celebration'],
   },
   {
     id: 'appearance', icon: 'palette', title: 'Appearance',
@@ -119,6 +119,7 @@ const SECTIONS = [
     ]]],
     reset: ['plantumlServer', 'plantumlConsent'],
   },
+  { id: 'ai', icon: 'agent', title: 'AI Provider', ai: true },
   { id: 'shortcuts', icon: 'keyboard', title: 'Shortcuts', shortcuts: true, reset: ['shortcuts'] },
   { id: 'data', icon: 'wrench', title: 'Import / Export', data: true },
 ];
@@ -150,6 +151,25 @@ export async function mountSettings(root, { compact = false, onClose } = {}) {
   let active = sessionStorage.getItem('mc-settings-tab') || 'general';
   let filter = '';
   const recording = { key: null };
+  // Unsaved AI provider form. The saved API key is never put back into the page.
+  let ai = null;
+  const aiDraft = () => {
+    if (!ai) {
+      const p = llm.getProvider();
+      ai = { format: p?.format || 'openai', baseUrl: p?.baseUrl || llm.FORMATS.openai.baseUrl, model: p?.model || '', apiKey: '', status: '', ok: false };
+      if (!p) ai.model = llm.FORMATS[ai.format].model;
+    }
+    return ai;
+  };
+  // A blank key field keeps the saved key, but only while the host stays the same:
+  // pointing the provider at another server always requires typing the key again.
+  const aiCandidate = () => {
+    const d = aiDraft();
+    const saved = llm.getProvider();
+    let apiKey = d.apiKey.trim();
+    if (!apiKey && saved && saved.format === d.format && llm.providerHost(saved) === llm.providerHost({ baseUrl: d.baseUrl.trim() })) apiKey = saved.apiKey;
+    return { format: d.format, baseUrl: d.baseUrl.trim(), model: d.model.trim(), apiKey };
+  };
 
   root.classList.add('mc-settings');
   root.innerHTML = `
@@ -220,6 +240,20 @@ export async function mountSettings(root, { compact = false, onClose } = {}) {
       }
       html += '</div></div>';
     }
+    if (sec.ai) {
+      const d = aiDraft();
+      const saved = llm.getProvider();
+      const row = (label, desc, ctl, stack = true) => `<div class="st-row ${stack ? 'stack' : ''}" data-search="${esc((t(label) + ' ' + t(desc) + ' ' + label + ' ai provider api key openai anthropic').toLowerCase())}"><div class="st-label"><b>${esc(t(label))}</b>${desc ? `<p>${esc(t(desc))}</p>` : ''}</div><div class="st-ctl">${ctl}</div></div>`;
+      html += `<p class="st-intro">${t('Required for the built-in agent. The document you hand to the agent is sent to this provider. Your API key is stored only in this browser on this device: it is not synced, not included in settings exports, and only sent to the base URL below.')}</p>
+      <div class="st-group"><div class="st-card">
+        ${row('API format', 'Use OpenAI for any OpenAI-compatible service (OpenAI, DeepSeek, OpenRouter, Ollama…).', `<div class="segment">${Object.entries(llm.FORMATS).map(([k, f]) => `<button data-ai-format="${k}" class="${d.format === k ? 'on' : ''}">${esc(f.label)}</button>`).join('')}</div>`, false)}
+        ${row('Base URL', d.format === 'anthropic' ? 'e.g. https://api.anthropic.com' : 'e.g. https://api.openai.com/v1 — requests go to <Base URL>/chat/completions', `<input type="text" class="text" data-ai="baseUrl" value="${esc(d.baseUrl)}" placeholder="${esc(llm.FORMATS[d.format].baseUrl)}" spellcheck="false" autocomplete="off">`)}
+        ${row('Model', d.format === 'anthropic' ? 'e.g. claude-opus-5-5' : 'e.g. gpt-5, deepseek-chat', `<input type="text" class="text" data-ai="model" value="${esc(d.model)}" placeholder="${esc(llm.FORMATS[d.format].model || 'model name')}" spellcheck="false" autocomplete="off">`)}
+        ${row('API key', saved ? 'A key is saved. Leave empty to keep it (only while the host stays the same).' : 'Stored only on this device.', `<input type="password" class="text" data-ai="apiKey" value="${esc(d.apiKey)}" placeholder="${esc(saved ? '••••••••' : 'sk-…')}" spellcheck="false" autocomplete="off">`)}
+        <div class="st-row"><div class="st-label"><b>${t(saved ? 'Configured' : 'Not configured')}</b><p class="ai-status ${d.ok ? 'ok' : ''}">${esc(d.status || (saved ? `${llm.providerHost(saved)} · ${saved.model}` : t('The built-in agent is unavailable until a provider is saved.')))}</p></div>
+          <div class="st-ctl">${saved ? `<button class="btn small danger" data-op="ai-clear">${t('Remove')}</button>` : ''}<button class="btn small" data-op="ai-test">${t('Test')}</button><button class="btn small primary" data-op="ai-save">${t('Save')}</button></div></div>
+      </div></div>`;
+    }
     if (sec.data) {
       html += `<div class="st-group"><h3>${t('Import / Export')}</h3><div class="st-card">
         <div class="st-row"><div class="st-label"><b>${t('Export Settings')}</b><p>${t('Download your settings as a JSON file.')}</p></div><div class="st-ctl"><button class="btn small" data-op="export">${icon('download', 15)} ${t('Export Settings')}</button></div></div>
@@ -229,7 +263,6 @@ export async function mountSettings(root, { compact = false, onClose } = {}) {
         <div class="st-row"><div class="st-label"><b>${t('Clear Cache')}</b><p>${t('Clears cached file handles, recent documents and folder bookmarks. Your annotations are kept.')}</p></div><div class="st-ctl"><button class="btn small" data-op="cache">${t('Clear Cache')}</button></div></div>
         <div class="st-row"><div class="st-label"><b>${t('Delete all annotations')}</b><p>${t('Remove highlights and comments for every document.')}</p></div><div class="st-ctl"><button class="btn small danger" data-op="annotations">${t('Delete')}</button></div></div>
         <div class="st-row"><div class="st-label"><b>${t('Reset to Defaults')}</b><p>${t('This will reset all settings to their default values.')}</p></div><div class="st-ctl"><button class="btn small danger" data-op="reset-all">${t('Reset to Defaults')}</button></div></div>
-        <div class="st-row"><div class="st-label"><b>${t('Native helper')}</b><p class="host-status">${t('Checking native helper…')}</p></div><div class="st-ctl"><code class="ext-id">${chrome.runtime.id}</code></div></div>
       </div></div>`;
     }
     if (sec.reset) html += `<div class="st-foot"><button class="btn small ghost" data-reset="${sec.id}">${icon('reset', 14)} ${t('Reset')} ${esc(t(sec.title))}</button></div>`;
@@ -247,30 +280,6 @@ export async function mountSettings(root, { compact = false, onClose } = {}) {
     } else {
       const sec = SECTIONS.find((x) => x.id === active) || SECTIONS[0];
       body.innerHTML = `<h2>${icon(sec.icon, 20)} ${esc(t(sec.title))}</h2>${sectionHtml(sec)}`;
-    }
-    if (active === 'data' || filter) checkHost();
-  }
-
-  function checkHost() {
-    const el = body.querySelector('.host-status');
-    if (!el) return;
-    try {
-      const port = chrome.runtime.connectNative('com.markcraft.host');
-      const timer = setTimeout(() => (el.textContent = t('Native helper not responding.')), 2500);
-      port.onMessage.addListener((m) => {
-        clearTimeout(timer);
-        const clis = Object.entries(m.result?.clis || {}).filter(([, v]) => v).map(([k]) => k).join(', ') || '—';
-        el.textContent = `${t('Installed')} v${m.result?.version} · ${t('Agents')}: ${clis}`;
-        el.classList.add('ok');
-        port.disconnect();
-      });
-      port.onDisconnect.addListener(() => {
-        clearTimeout(timer);
-        if (!el.classList.contains('ok')) el.textContent = t('Not installed — run ./native/install.sh to enable direct saving, agents and the terminal.');
-      });
-      port.postMessage({ id: 1, type: 'ping' });
-    } catch {
-      el.textContent = t('Not installed — run ./native/install.sh to enable direct saving, agents and the terminal.');
     }
   }
 
@@ -294,6 +303,7 @@ export async function mountSettings(root, { compact = false, onClose } = {}) {
   });
   body.addEventListener('input', (e) => {
     const el = e.target;
+    if (el.dataset.ai) { aiDraft()[el.dataset.ai] = el.value; return; }
     if (el.type === 'range') {
       const unit = SECTIONS.flatMap((x) => x.groups || []).flatMap(([, f]) => f).find((f) => f[0] === el.dataset.key)?.[4]?.unit || '';
       el.nextElementSibling.textContent = el.value + unit;
@@ -318,6 +328,41 @@ export async function mountSettings(root, { compact = false, onClose } = {}) {
   body.addEventListener('click', async (e) => {
     const b = e.target.closest('button');
     if (!b) return;
+    if (b.dataset.aiFormat) {
+      const d = aiDraft();
+      const prev = llm.FORMATS[d.format];
+      const next = llm.FORMATS[b.dataset.aiFormat];
+      if (!d.baseUrl.trim() || d.baseUrl.trim() === prev.baseUrl) d.baseUrl = next.baseUrl;
+      if (!d.model.trim() || d.model.trim() === prev.model) d.model = next.model;
+      d.format = b.dataset.aiFormat;
+      return render();
+    }
+    if (b.dataset.op?.startsWith('ai-')) {
+      const d = aiDraft();
+      if (b.dataset.op === 'ai-clear') {
+        if (!confirm(t('Remove the AI provider and its API key from this device?'))) return;
+        llm.clearProvider();
+        ai = null;
+        return render();
+      }
+      const cand = aiCandidate();
+      if (b.dataset.op === 'ai-save') {
+        try { llm.setProvider(cand); } catch (err) { Object.assign(d, { status: t(err.message), ok: false }); return render(); }
+        Object.assign(d, { apiKey: '', status: t('Saved.'), ok: true });
+        return render();
+      }
+      const err = llm.providerError(cand);
+      if (err) { Object.assign(d, { status: t(err), ok: false }); return render(); }
+      Object.assign(d, { status: t('Testing…'), ok: false });
+      render();
+      try {
+        const reply = await llm.testProvider(llm.normalizeProvider(cand));
+        Object.assign(d, { status: t('Connection works. The model replied: {r}', { r: reply || '—' }), ok: true });
+      } catch (err) {
+        Object.assign(d, { status: err.message, ok: false });
+      }
+      return render();
+    }
     if (b.closest('.segment')) return save({ [b.closest('.segment').dataset.key]: b.dataset.v });
     if (b.dataset.clear) return save({ [b.dataset.clear]: '' });
     if (b.dataset.rm) { const list = [...s[b.dataset.rm]]; list.splice(+b.dataset.i, 1); return save({ [b.dataset.rm]: list }); }

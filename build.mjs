@@ -1,5 +1,6 @@
 import * as esbuild from 'esbuild';
-import { cp, mkdir, rm, readFile, writeFile } from 'node:fs/promises';
+import { cp, mkdir, rm, readFile, writeFile, readdir } from 'node:fs/promises';
+import path from 'node:path';
 
 const watch = process.argv.includes('--watch');
 const out = 'dist';
@@ -32,7 +33,34 @@ const builds = [
 if (watch) {
   for (const b of builds) await (await esbuild.context(b)).watch();
 } else {
-  await Promise.all(builds.map((b) => esbuild.build(b)));
+  const results = await Promise.all(builds.map((b) => esbuild.build({ ...b, metafile: true })));
+  await writeNotices(results.flatMap((r) => Object.keys(r.metafile.inputs)));
+}
+
+// Collects the license text of every npm package that ended up in the bundles (plus the
+// highlight.js themes copied above) into THIRD_PARTY_LICENSES.txt, as their licenses
+// require when the extension is distributed.
+async function writeNotices(inputs) {
+  const roots = new Set(['node_modules/highlight.js']);
+  for (const file of inputs) {
+    const m = /^(.*node_modules\/(?:@[^/]+\/)?[^/]+)\//.exec(file);
+    if (m) roots.add(m[1]);
+  }
+  const entries = [];
+  for (const root of roots) {
+    const pkg = JSON.parse(await readFile(path.join(root, 'package.json'), 'utf8'));
+    const files = (await readdir(root)).filter((f) => /^(licen[cs]e|copying|notice)/i.test(f)).sort();
+    const texts = await Promise.all(files.map((f) => readFile(path.join(root, f), 'utf8')));
+    const license = typeof pkg.license === 'string' ? pkg.license : pkg.license?.type || 'see package';
+    // The source location also covers licenses such as EPL-2.0 that require saying where to get it.
+    const repo = String(pkg.repository?.url || pkg.repository || '').replace(/^git\+/, '');
+    const text = texts.join('\n\n').trim() || `License: ${license} (no license file in the package)`;
+    entries.push({ id: `${pkg.name}@${pkg.version}`, license, text: repo ? `Source: ${repo}\n\n${text}` : text });
+  }
+  entries.sort((a, b) => a.id.localeCompare(b.id));
+  const lines = ['MarkCraft bundles the following third-party packages.', ''];
+  for (const e of entries) lines.push('='.repeat(78), `${e.id} — ${e.license}`, '='.repeat(78), e.text, '');
+  await writeFile(`${out}/THIRD_PARTY_LICENSES.txt`, lines.join('\n'));
 }
 
 const manifest = JSON.parse(await readFile('src/manifest.json', 'utf8'));

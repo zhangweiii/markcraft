@@ -1,22 +1,19 @@
-// "Ask Agent" and terminal panels backed by the native host. The agent always
-// works on an isolated copy of the current buffer; its result is shown as a diff
-// and only applied when the user accepts it.
-import * as native from './native.js';
+// "Ask Agent" panel. The agent runs on the AI provider configured in Settings → AI
+// Provider, straight from this page; it is unavailable until one is set up. It works on
+// a copy of the current buffer; its result is shown as a diff and only applied when the
+// user accepts it.
+import * as llm from '../shared/llm.js';
 import { renderDiff, diffStats } from './diffview.js';
-import { escapeHtml } from './render.js';
-
-const INSTALL_CMD = 'cd /path/to/markcraft && ./native/install.sh';
+import { t } from '../shared/i18n.js';
 
 export class AgentPanel {
-  constructor({ el, getDoc, onApply, getSettings, saveSettings, toast }) {
+  constructor({ el, getDoc, onApply, openSettings, toast }) {
     this.el = el;
     this.getDoc = getDoc;
     this.onApply = onApply;
-    this.getSettings = getSettings;
-    this.saveSettings = saveSettings;
+    this.openSettings = openSettings;
     this.toast = toast;
     this.prompt = el.querySelector('#agent-prompt');
-    this.cli = el.querySelector('#agent-cli');
     this.log = el.querySelector('#agent-log');
     this.runBtn = el.querySelector('[data-act="agent-run"]');
     this.stopBtn = el.querySelector('[data-act="agent-stop"]');
@@ -25,34 +22,31 @@ export class AgentPanel {
 
     this.runBtn.addEventListener('click', () => this.run());
     this.stopBtn.addEventListener('click', () => this.stop());
-    this.cli.addEventListener('change', () => this.saveSettings({ agentCli: this.cli.value }));
     this.prompt.addEventListener('keydown', (e) => {
       if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) { e.preventDefault(); this.run(); }
     });
     el.querySelector('[data-act="agent-copy"]').addEventListener('click', async () => {
       await navigator.clipboard.writeText(this.fullPrompt());
-      this.toast('Prompt copied — paste it into Claude Code, Codex or any agent');
+      this.toast('Prompt copied — paste it into any AI assistant');
     });
   }
 
-  async refresh() {
-    const s = this.getSettings();
-    this.cli.value = s.agentCli;
-    const st = await native.ping();
+  refresh() {
     const box = this.el.querySelector('#agent-host');
-    if (!st) {
+    const dest = this.el.querySelector('#agent-dest');
+    const p = llm.getProvider();
+    if (!llm.providerReady(p)) {
       box.hidden = false;
-      box.innerHTML = `<b>Native helper not installed.</b> Running agents and the terminal needs the small local helper that ships with MarkCraft. In a terminal run:<pre>${escapeHtml(INSTALL_CMD)}</pre>then reload this page. Until then, use <i>Copy prompt</i> to hand the task to your agent manually.<br><button class="btn small" data-act="host-retry">Check again</button>`;
-      box.querySelector('[data-act="host-retry"]').onclick = async () => { await native.ping(true); this.refresh(); };
+      box.innerHTML = `<b>${t('No AI provider configured.')}</b> ${t('The built-in agent sends the document to an AI provider you choose. Add one with its API format (OpenAI or Anthropic), base URL, model and API key.')}<br><button class="btn small" data-act="agent-config">${t('Configure AI provider')}</button>`;
+      box.querySelector('[data-act="agent-config"]').onclick = () => this.openSettings('ai');
+      dest.hidden = true;
       this.runBtn.disabled = true;
       return;
     }
     box.hidden = true;
-    this.runBtn.disabled = !!this.job;
-    for (const opt of this.cli.options) {
-      opt.disabled = !st.clis?.[opt.value];
-      opt.textContent = opt.dataset.label + (st.clis?.[opt.value] ? '' : ' (not found)');
-    }
+    dest.hidden = false;
+    dest.textContent = t('Sends this document to {host} · {model}', { host: llm.providerHost(p), model: p.model });
+    this.runBtn.disabled = !!this.abort;
   }
 
   setPrompt(text) {
@@ -75,29 +69,40 @@ export class AgentPanel {
 
   async run() {
     const task = this.prompt.value.trim();
-    if (!task || this.job) return;
+    if (!task || this.abort) return;
+    const provider = llm.getProvider();
+    if (!llm.providerReady(provider)) return this.refresh();
     const doc = this.getDoc();
+    const original = doc.text;
+    const { system, user, tag } = llm.editPrompt({ text: original, name: doc.name, task });
     this.log.innerHTML = '';
     this.result.hidden = true;
-    this.status.textContent = 'Running…';
     this.el.classList.add('running');
     this.runBtn.disabled = true;
     this.stopBtn.hidden = false;
-    const original = doc.text;
-    this.job = Date.now();
+    this.abort = new AbortController();
+    let received = 0;
+    this.status.textContent = t('Waiting for {host}…', { host: llm.providerHost(provider) });
+    this.appendLog(`→ ${llm.providerHost(provider)} · ${provider.model}`, 'dim');
     try {
-      const res = await native.call(
-        'agent',
-        { job: this.job, cli: this.cli.value, task, name: doc.name, text: original, contextDir: doc.dirPath || null, docPath: doc.path },
-        (ev) => this.appendLog(ev.text, ev.stream || ''),
-      );
-      this.status.textContent = res.exitCode === 0 ? 'Finished' : `Exited with code ${res.exitCode}`;
-      this.showResult(original, res.text);
+      const res = await llm.complete({
+        system,
+        user,
+        signal: this.abort.signal,
+        onText: (d) => { received += d.length; this.status.textContent = t('Receiving… {n} characters', { n: received.toLocaleString() }); },
+      });
+      if (res.stopped === 'refusal') throw new Error(t('The model declined this request.'));
+      if (res.stopped === 'length') throw new Error(t('The reply was cut off before the document was complete, so nothing was changed. Try a smaller document or a model with a larger output limit.'));
+      const edit = llm.parseEdit(res.text, tag, original);
+      if (!edit) throw new Error(t('The reply did not contain a revised document, so nothing was changed.'));
+      this.status.textContent = t('Finished');
+      if (edit.summary) this.appendLog(edit.summary);
+      this.showResult(original, edit.doc);
     } catch (e) {
-      this.status.textContent = 'Failed';
-      this.appendLog(e.message, 'stderr');
+      this.status.textContent = e.message === 'Stopped' ? t('Stopped') : t('Failed');
+      if (e.message !== 'Stopped') this.appendLog(e.message, 'stderr');
     } finally {
-      this.job = null;
+      this.abort = null;
       this.el.classList.remove('running');
       this.runBtn.disabled = false;
       this.stopBtn.hidden = true;
@@ -105,7 +110,7 @@ export class AgentPanel {
   }
 
   stop() {
-    if (this.job) native.cancel(this.job);
+    this.abort?.abort();
   }
 
   showResult(original, next) {
@@ -121,59 +126,5 @@ export class AgentPanel {
     this.result.querySelector('[data-act="discard"]').onclick = () => { this.result.hidden = true; };
     this.result.querySelector('[data-act="apply"]').onclick = () => { this.onApply(next, false); this.result.hidden = true; };
     this.result.querySelector('[data-act="apply-save"]').onclick = () => { this.onApply(next, true); this.result.hidden = true; };
-  }
-}
-
-export class TerminalPanel {
-  constructor({ el, getCwd }) {
-    this.el = el;
-    this.getCwd = getCwd;
-    this.input = el.querySelector('#term-input');
-    this.out = el.querySelector('#term-out');
-    this.history = JSON.parse(localStorage.getItem('mc-term-history') || '[]');
-    this.hpos = this.history.length;
-    this.input.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') { e.preventDefault(); this.exec(this.input.value); }
-      if (e.key === 'ArrowUp' && this.hpos > 0) { e.preventDefault(); this.input.value = this.history[--this.hpos]; }
-      if (e.key === 'ArrowDown') { e.preventDefault(); this.hpos = Math.min(this.history.length, this.hpos + 1); this.input.value = this.history[this.hpos] || ''; }
-      if (e.key === 'c' && e.ctrlKey && this.job) { e.preventDefault(); native.cancel(this.job); }
-    });
-    el.querySelector('[data-act="term-clear"]').addEventListener('click', () => (this.out.innerHTML = ''));
-  }
-
-  async refresh() {
-    const st = await native.ping();
-    this.el.querySelector('#term-host').hidden = !!st;
-    this.input.disabled = !st;
-    this.cwd ||= this.getCwd() || st?.home || '~';
-    this.el.querySelector('#term-cwd').textContent = this.cwd;
-  }
-
-  print(text, cls = '') {
-    const span = document.createElement('span');
-    span.className = cls;
-    span.textContent = text;
-    this.out.append(span);
-    this.out.scrollTop = this.out.scrollHeight;
-  }
-
-  async exec(cmd) {
-    cmd = cmd.trim();
-    if (!cmd || this.job) return;
-    this.history = [...this.history.filter((h) => h !== cmd), cmd].slice(-100);
-    this.hpos = this.history.length;
-    localStorage.setItem('mc-term-history', JSON.stringify(this.history));
-    this.input.value = '';
-    this.print(`$ ${cmd}\n`, 'cmd');
-    this.job = Date.now();
-    try {
-      const res = await native.call('exec', { job: this.job, cmd, cwd: this.cwd }, (ev) => this.print(ev.text, ev.stream));
-      if (res.cwd) { this.cwd = res.cwd; this.el.querySelector('#term-cwd').textContent = this.cwd; }
-      if (res.exitCode) this.print(`[exit ${res.exitCode}]\n`, 'stderr');
-    } catch (e) {
-      this.print(e.message + '\n', 'stderr');
-    } finally {
-      this.job = null;
-    }
   }
 }

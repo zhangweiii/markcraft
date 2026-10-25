@@ -24,7 +24,7 @@ const ZH = {
   'f1.l3': 'Mintlify 组件：Card、Tabs、Steps、Accordion、CodeGroup',
   'f2.eyebrow': '批注与 AI',
   'f2.title': '像审文档一样批注，<br>再交给 AI 处理。',
-  'f2.body': '四种颜色高亮、下划线、评论，任意段落都能标。批注可以一键生成提示词，也可以让 Claude Code 或 Codex 在隔离副本上修改，你看过差异再决定是否应用。',
+  'f2.body': '四种颜色高亮、下划线、评论，任意段落都能标。批注可以一键生成提示词，也可以让内置 Agent 用你配置的 AI 服务商修改副本，你看过差异再决定是否应用。',
   'f2.l1': '按类型筛选，未解决的一目了然',
   'f2.l2': '批注刷新后仍在，打印和导出时也会保留',
   'f2.l3': '用清晰的 +/− 差异接受或放弃 Agent 的修改',
@@ -54,7 +54,7 @@ const ZH = {
   'g5.t': '快捷键', 'g5.d': '21 个操作都能改键，按 <kbd>?</kbd> 查看速查表。',
   'g6.t': '文件夹', 'g6.d': '浏览、按类型或日期分组、收藏和搜索文件夹。',
   'g7.t': '网页 Markdown', 'g7.d': 'GitHub 等网站上的原始 .md 文件也会自动渲染。',
-  'g8.t': '本地助手', 'g8.d': '可选：直接保存文件、内置终端和 Agent。',
+  'g8.t': '原地保存', 'g8.d': '⌘S 直接写回文件——首次选一次文件，或直接打开整个文件夹。',
   'privacy.title': '隐私是默认设置。',
   'privacy.body': '没有账号、没有统计、没有遥测。文档只在你的浏览器里渲染，不会上传到任何地方。唯一可选的联网功能 PlantUML，在你明确同意之前一直关闭。',
   'install.eyebrow': '安装',
@@ -67,6 +67,7 @@ const ZH = {
   'final.body': 'MarkCraft 采用 MIT 许可证，公开开发。欢迎提 Issue、想法和 Pull Request。',
   'footer.issues': '问题反馈',
   'footer.license': 'MIT 许可证',
+  'footer.privacy': '隐私政策',
   'footer.by': 'MarkCraft 贡献者',
 };
 

@@ -1,6 +1,5 @@
 // Where a document comes from and how to read, watch, write and resolve relative paths.
 import { db, storeHandle } from '../shared/db.js';
-import * as native from './native.js';
 
 export const MD_EXT = /\.(md|markdown|mdown|mkd|mkdn|mdwn|mdtxt|mdtext|mdx|rmd|qmd|txt)$/i;
 export const VIEWER = chrome.runtime.getURL('viewer.html');
@@ -68,8 +67,7 @@ export class UrlSource {
   // Returns a new source when the user chose to save somewhere else.
   async write(text) {
     if (this.bound && (await ensurePermission(this.bound, true))) return writeHandle(this.bound, text);
-    if (this.isFile && (await native.ping())) return native.call('write', { path: this.path, text });
-    // No direct write access to file:// URLs: ask once for the file and remember it.
+    // Extensions cannot write to file:// URLs: ask once for the file and remember it.
     const handle = await showSaveFilePicker({ suggestedName: this.name, types: PICKER_TYPES });
     await writeHandle(handle, text);
     if (handle.name === this.name && this.isFile) {
