@@ -36,7 +36,13 @@
 
 **Settings** — General, Appearance, Plugins, Presentation, PlantUML, customizable Shortcuts, Import/Export. Interface in English and 简体中文.
 
-## Install (from source)
+## Install
+
+[Add to Chrome — Chrome Web Store](https://chromewebstore.google.com/detail/eibpkekkbhlojpcfbfcihegmhiclfopg)
+
+For local files, open `chrome://extensions` → MarkCraft → **Details** and enable **Allow access to file URLs**.
+
+### From source
 
 ```sh
 git clone https://github.com/zhangweiii/markcraft.git

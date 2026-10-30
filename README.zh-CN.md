@@ -8,6 +8,12 @@ MarkCraft 是一个 Manifest V3 Chrome 扩展，用来阅读、编辑、批注�
 
 ## 安装
 
+[添加至 Chrome — Chrome 应用商店](https://chromewebstore.google.com/detail/eibpkekkbhlojpcfbfcihegmhiclfopg)
+
+需要打开本地文件时，在 `chrome://extensions` → MarkCraft → **详情** 中开启 **允许访问文件网址**。
+
+### 从源码安装
+
 ```sh
 git clone https://github.com/zhangweiii/markcraft.git
 cd markcraft
