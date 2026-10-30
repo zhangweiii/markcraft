@@ -4,7 +4,7 @@
 
 ![MarkCraft 渲染 Markdown 文档：左侧文件栏、Mermaid 图表和右侧大纲](site/assets/screens/hero-light.jpg)
 
-MarkCraft 是一个 Manifest V3 Chrome 扩展，用来阅读、编辑、批注和演示 Markdown 文件。所有处理都在本地完成，不收集任何数据。
+MarkCraft 是一个 Manifest V3 Chrome 扩展，用来阅读、编辑、批注和演示 Markdown 文件。文档在本地渲染，没有统计和遥测。配置并运行 AI 时，文档和指令会发送给你选择的服务商；PlantUML 在取得同意后会把图表源码发送到你配置的服务器。
 
 ## 安装
 

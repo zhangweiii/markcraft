@@ -8,3 +8,18 @@ scripts/key.pem
 # images it points at — regenerate the images with `npm run store-assets`.
 PUBLISH.md
 store-assets
+
+# Local credentials and private keys (public keys remain trackable).
+.env
+.env.*
+!.env.example
+!.env.sample
+*.pem
+*.key
+*.p12
+*.pfx
+id_rsa
+id_ed25519
+.aws/
+credentials.json
+service-account*.json

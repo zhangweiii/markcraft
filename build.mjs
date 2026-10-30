@@ -7,6 +7,7 @@ const out = 'dist';
 await rm(out, { recursive: true, force: true });
 await mkdir(out, { recursive: true });
 await cp('src/static', out, { recursive: true });
+await cp('LICENSE', `${out}/LICENSE`);
 // highlight.js themes offered in Settings → Appearance → Syntax Theme.
 await mkdir(`${out}/hljs`, { recursive: true });
 for (const theme of ['github', 'github-dark', 'atom-one-light', 'atom-one-dark', 'vs', 'vs2015', 'monokai', 'nord', 'tokyo-night-dark', 'stackoverflow-light', 'xcode']) {
@@ -41,6 +42,14 @@ if (watch) {
 // highlight.js themes copied above) into THIRD_PARTY_LICENSES.txt, as their licenses
 // require when the extension is distributed.
 async function writeNotices(inputs) {
+  // Version-specific upstream copies for packages that omit their license text.
+  const supplements = {
+    '@viz-js/viz@3.31.0': 'viz-js',
+    'marked-alert@2.1.2': 'marked-extensions',
+    'marked-footnote@1.4.0': 'marked-extensions',
+    'remark-math@6.0.0': 'remark-math',
+    'standardwebhooks@1.1.1': 'standardwebhooks',
+  };
   const roots = new Set(['node_modules/highlight.js']);
   for (const file of inputs) {
     const m = /^(.*node_modules\/(?:@[^/]+\/)?[^/]+)\//.exec(file);
@@ -54,7 +63,10 @@ async function writeNotices(inputs) {
     const license = typeof pkg.license === 'string' ? pkg.license : pkg.license?.type || 'see package';
     // The source location also covers licenses such as EPL-2.0 that require saying where to get it.
     const repo = String(pkg.repository?.url || pkg.repository || '').replace(/^git\+/, '');
-    const text = texts.join('\n\n').trim() || `License: ${license} (no license file in the package)`;
+    const supplement = supplements[`${pkg.name}@${pkg.version}`];
+    if (!texts.join('').trim() && supplement) texts.push(await readFile(`licenses/${supplement}.txt`, 'utf8'));
+    const text = texts.join('\n\n').trim();
+    if (!text) throw new Error(`Missing license text for ${pkg.name}@${pkg.version}; add a verified upstream copy in licenses/`);
     entries.push({ id: `${pkg.name}@${pkg.version}`, license, text: repo ? `Source: ${repo}\n\n${text}` : text });
   }
   entries.sort((a, b) => a.id.localeCompare(b.id));

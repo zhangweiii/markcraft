@@ -1,6 +1,6 @@
 # MarkCraft
 
-**A free, open-source Markdown viewer, editor and reviewer for Chrome.** Open any `.md` file — local or remote — and get a polished reading view with diagrams, math, outline, annotations, live reload, WYSIWYG editing, presentation mode, mind maps and Word/HTML/PDF export. Everything runs locally; nothing is collected.
+**A free, open-source Markdown viewer, editor and reviewer for Chrome.** Open any `.md` file — local or remote — and get a polished reading view with diagrams, math, outline, annotations, live reload, WYSIWYG editing, presentation mode, mind maps and Word/HTML/PDF export. Rendering runs locally, with no analytics or telemetry. Optional AI sends the document and instructions to your configured provider when you run it; PlantUML sends diagram source to your configured server after consent.
 
 [Website](https://markcraft.cc) · [简体中文说明](README.zh-CN.md) · [Issues](https://github.com/zhangweiii/markcraft/issues)
 
