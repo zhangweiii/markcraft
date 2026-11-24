@@ -87,6 +87,7 @@ const ZH = {
   'Saved {time}': '已保存 {time}', 'Saved “{name}”': '已保存“{name}”', 'Save failed: {e}': '保存失败：{e}', 'Word export failed: {e}': 'Word 导出失败：{e}',
   'Mind map failed: {e}': '思维导图生成失败：{e}', '{n} files · {m} searched': '{n} 个文件匹配 · 共搜索 {m} 个', 'No matches in {n} files': '在 {n} 个文件中没有匹配',
   'Couldn’t open {name}': '无法打开 {name}', 'Allow access to “{name}”': '允许访问“{name}”', 'Bookmarked “{name}”': '已收藏“{name}”',
+  'File not found.': '文件不存在。', 'Could not read the file.': '无法读取文件。', 'File not found or unreadable.': '文件不存在或无法读取。',
   '“{name}” has unsaved changes. Discard them?': '“{name}”有未保存的修改，要放弃吗？', 'Delete all review comments for this document?': '删除此文档的所有评审意见？',
   // settings, sidebars, actions
   "Customize your reading experience": "自定义你的阅读体验",

@@ -11,8 +11,8 @@ async function writeHandle(handle, text) {
   await w.close();
 }
 
-async function ensurePermission(handle, interactive) {
-  const opts = { mode: 'readwrite' };
+async function ensurePermission(handle, interactive, mode = 'readwrite') {
+  const opts = { mode };
   if ((await handle.queryPermission(opts)) === 'granted') return true;
   if (!interactive) return false;
   return (await handle.requestPermission(opts)) === 'granted';
@@ -111,8 +111,8 @@ export class HandleSource {
     this.writable = true;
   }
 
-  needsPermission() { return ensurePermission(this.root || this.handle, false).then((ok) => !ok); }
-  requestPermission() { return ensurePermission(this.root || this.handle, true); }
+  needsPermission() { return ensurePermission(this.root || this.handle, false, 'read').then((ok) => !ok); }
+  requestPermission() { return ensurePermission(this.root || this.handle, true, 'read'); }
   async init() {}
 
   async read() {

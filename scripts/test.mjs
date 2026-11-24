@@ -1,7 +1,7 @@
 // End-to-end smoke test: loads dist/ into Chromium and exercises the viewer.
 // Usage: npm test   (optionally CH=/path/to/chrome to use a specific Chromium build)
 import { chromium } from 'playwright';
-import { cp, mkdtemp, readFile, writeFile } from 'node:fs/promises';
+import { cp, mkdtemp, readFile, rename, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import http from 'node:http';
 import path from 'node:path';
@@ -158,6 +158,31 @@ await page.click('#doc .graphviz-diagram .diagram-zoom');
 check('diagram fullscreen zoom', await page.isVisible('.zoomer svg'));
 await page.keyboard.press('Escape');
 
+await page.hover('#doc .mermaid-diagram');
+await page.click('#doc .mermaid-diagram .diagram-zoom');
+await page.click('.zoomer [data-z="in"]');
+const zoomed = page.locator('.zoomer svg');
+const beforePan = await zoomed.boundingBox();
+const panX = beforePan.x + beforePan.width / 2;
+const panY = beforePan.y + beforePan.height / 2;
+await page.mouse.move(panX, panY);
+await page.mouse.down();
+await page.mouse.move(panX + 60, panY + 40, { steps: 5 });
+await page.mouse.up();
+const afterPan = await zoomed.boundingBox({ timeout: 500 }).catch(() => null);
+check('dragging a zoomed Mermaid diagram keeps it open and pans it', afterPan && Math.abs(afterPan.x - beforePan.x - 60) < 1 && Math.abs(afterPan.y - beforePan.y - 40) < 1);
+if (afterPan) {
+  await page.click('.zoomer [data-z="fit"]');
+  await page.mouse.move(4, 4);
+  await page.mouse.down();
+  await page.mouse.move(64, 44, { steps: 4 });
+  await page.mouse.move(4, 4, { steps: 4 });
+  await page.mouse.up();
+  check('dragging from the backdrop and back keeps the lightbox open', await zoomed.isVisible());
+  await page.click('.zoomer-stage', { position: { x: 4, y: 4 } });
+  check('clicking the backdrop after panning closes the lightbox', !(await page.isVisible('.zoomer')));
+}
+
 // Word export
 const dl = page.waitForEvent('download', { timeout: 20000 }).catch(() => null);
 await page.evaluate(() => document.querySelector('#actions-menu [data-act="export-docx"]').click());
@@ -304,6 +329,24 @@ const p2 = await ctx.newPage();
 await p2.goto('file://' + path.join(work, 'llms.txt'));
 await p2.waitForSelector('#doc h1', { timeout: 8000 }).catch(() => {});
 check('.txt rendered as Markdown', (await p2.textContent('#doc h1').catch(() => '')) === 'llms.txt');
+const viewer = new URL('viewer.html', p2.url()).href;
+const recentFile = path.join(work, 'llms.txt');
+await p2.goto(viewer);
+await rename(recentFile, recentFile + '.moved');
+await p2.locator('.recent a').filter({ hasText: 'llms.txt' }).click();
+await p2.locator('#retry-btn').waitFor();
+check('missing recent file shows a file-not-found error', (await p2.textContent('#welcome .error-text')) === 'File not found.' && !(await p2.isVisible('#ext-settings')));
+await rename(recentFile + '.moved', recentFile);
+await p2.click('#retry-btn');
+await p2.locator('#doc h1').waitFor();
+check('retry opens the restored file', (await p2.textContent('#doc h1')) === 'llms.txt');
+
+await p2.evaluate(async () => {
+  const handle = await navigator.storage.getDirectory();
+  await window.__markcraft.db.set('handles', 'test-folder', { handle });
+});
+await p2.goto(viewer + '?root=test-folder&path=missing.md');
+check('missing file inside a saved folder shows the same error', await p2.locator('#welcome .error-text').textContent({ timeout: 3000 }).catch(() => '') === 'File not found.');
 await p2.close();
 
 // Settings modal: toggle a plugin and a layout option

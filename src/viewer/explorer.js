@@ -7,7 +7,8 @@ import { t } from '../shared/i18n.js';
 
 const MD_ONLY = /\.(md|markdown|mdown|mkd|mkdn|mdwn|mdtxt|mdtext|mdx|rmd|qmd)$/i;
 
-function parseListing(html, base) {
+export async function listUrlDirectory(base) {
+  const html = await (await fetch(base, { cache: 'no-store' })).text();
   // Chrome's file:// directory pages call addRow(name, url, isdir, size, sizeText, mtime, mtimeText).
   const out = [];
   for (const m of html.matchAll(/addRow\("((?:\\.|[^"\\])*)","((?:\\.|[^"\\])*)",(\d),(\d+),"(?:\\.|[^"\\])*",(\d+)/g)) {
@@ -169,8 +170,7 @@ export class Explorer {
   async list(node, withMeta = false) {
     let entries = [];
     if (node.url) {
-      const html = await (await fetch(node.url, { cache: 'no-store' })).text();
-      entries = parseListing(html, node.url);
+      entries = await listUrlDirectory(node.url);
     } else {
       for await (const [name, handle] of node.handle.entries()) entries.push({ name, kind: handle.kind === 'directory' ? 'dir' : 'file', handle });
       if (this.opts.sort !== 'name' || withMeta) {

@@ -38,10 +38,11 @@ export class Zoomer {
     this.x = 0;
     this.y = 0;
 
+    let backdropClick = false;
     this.el.addEventListener('click', (e) => {
       const b = e.target.closest('[data-z]');
       if (b) return this.act(b.dataset.z);
-      if (e.target === this.el || e.target === this.stage) this.close();
+      if (e.target === this.el || (e.target === this.stage && backdropClick)) this.close();
     });
     this.stage.addEventListener('wheel', (e) => {
       e.preventDefault();
@@ -49,15 +50,29 @@ export class Zoomer {
       this.zoomAt(factor, e.clientX, e.clientY);
     }, { passive: false });
     this.stage.addEventListener('pointerdown', (e) => {
-      if (!this.content) return;
+      if (!this.content || e.button !== 0 || !e.isPrimary) return;
       e.preventDefault();
+      // Capture retargets the eventual click to the stage, even when it began on the diagram.
+      backdropClick = e.target === this.stage;
       this.stage.setPointerCapture(e.pointerId);
       const sx = e.clientX - this.x;
       const sy = e.clientY - this.y;
       this.stage.classList.add('dragging');
-      const move = (ev) => { this.x = ev.clientX - sx; this.y = ev.clientY - sy; this.apply(); };
+      const move = (ev) => {
+        if (ev.pointerId !== e.pointerId) return;
+        if (Math.hypot(ev.clientX - e.clientX, ev.clientY - e.clientY) > 4) backdropClick = false;
+        this.x = ev.clientX - sx;
+        this.y = ev.clientY - sy;
+        this.apply();
+      };
+      const end = (ev) => {
+        if (ev.pointerId !== e.pointerId) return;
+        this.stage.removeEventListener('pointermove', move);
+        this.stage.removeEventListener('lostpointercapture', end);
+        this.stage.classList.remove('dragging');
+      };
       this.stage.addEventListener('pointermove', move);
-      this.stage.addEventListener('pointerup', () => { this.stage.removeEventListener('pointermove', move); this.stage.classList.remove('dragging'); }, { once: true });
+      this.stage.addEventListener('lostpointercapture', end);
     });
     this.stage.addEventListener('dblclick', (e) => (this.scale > this.fitScale * 1.05 ? this.fit() : this.zoomAt(2, e.clientX, e.clientY)));
     window.addEventListener('keydown', (e) => {

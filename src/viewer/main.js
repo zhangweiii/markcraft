@@ -5,7 +5,7 @@ import { addRecent, getRecent, storeHandle, db } from '../shared/db.js';
 import { renderMarkdown, enhance, taskPositions, escapeHtml, FRONT_MATTER as FRONT_MATTER_RE } from './render.js';
 import { Outline } from './toc.js';
 import { FindBar } from './find.js';
-import { Explorer } from './explorer.js';
+import { Explorer, listUrlDirectory } from './explorer.js';
 import { Review } from './review.js';
 import { AgentPanel } from './agent.js';
 import { renderDiff, diffStats } from './diffview.js';
@@ -315,13 +315,13 @@ async function uploadImage(file) {
 
 async function loadSource(src, { push = true, replace = false, initialText = null, keepMode = false } = {}) {
   await src.init();
-  if (src.kind === 'handle' && (await src.needsPermission())) {
-    const ok = await askPermission(src);
-    if (!ok) return;
-  }
-  await src.pendingResolve?.();
   let text;
   try {
+    if (src.kind === 'handle' && (await src.needsPermission())) {
+      const ok = await askPermission(src);
+      if (!ok) return;
+    }
+    await src.pendingResolve?.();
     text = initialText ?? (await src.read());
   } catch (e) {
     return showLoadError(src, e);
@@ -372,12 +372,22 @@ function askPermission(src) {
   });
 }
 
-function showLoadError(src, e) {
+async function showLoadError(src, e) {
   document.body.classList.remove('loading');
-  const fileBlocked = src.kind === 'url' && src.isFile;
+  const fileBlocked = src.isFile && !(await chrome.extension.isAllowedFileSchemeAccess());
+  let message = e.name === 'NotFoundError' ? t('File not found.') : e.message || String(e);
+  if (fileBlocked) {
+    message = t('To open file:// Markdown links directly, enable “Allow access to file URLs”.');
+  } else if (src.isFile && e.name === 'TypeError') {
+    // Chrome exposes the same fetch error for missing and unreadable local files.
+    const entries = await listUrlDirectory(src.dirUrl).catch(() => null);
+    if (entries) {
+      message = entries.some((entry) => entry.name === src.name) ? t('Could not read the file.') : t('File not found.');
+    } else message = t('File not found or unreadable.');
+  }
   showWelcome(`<div class="perm-card"><h2>${escapeHtml(t('Couldn’t open {name}', { name: src.name }))}</h2>
-    <p class="error-text">${escapeHtml(e.message || String(e))}</p>
-    ${fileBlocked ? `<p>To read local files, turn on <b>Allow access to file URLs</b> for MarkCraft.</p><button class="btn primary" id="ext-settings">Open extension settings</button>` : ''}
+    <p class="error-text">${escapeHtml(message)}</p>
+    ${fileBlocked ? `<button class="btn primary" id="ext-settings">Open extension settings</button>` : ''}
     <p><button class="btn" id="retry-btn">Try again</button></p></div>`);
   $('#retry-btn').onclick = () => loadSource(src, { push: false });
   $('#ext-settings')?.addEventListener('click', () => chrome.tabs.create({ url: `chrome://extensions/?id=${chrome.runtime.id}` }));
